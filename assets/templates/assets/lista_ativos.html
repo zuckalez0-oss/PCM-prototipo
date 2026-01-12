@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCM | Painel de Controle</title>
+    
+    <!-- CSS: Fontes e Estilos -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- HTMX: Para os botões Play/Pause sem recarregar a página -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; }
+        .navbar { background-color: #1a202c; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .status-badge { font-size: 0.85rem; padding: 0.5em 1em; border-radius: 50px; font-weight: 600; }
+        
+        /* Cores dos Status */
+        .status-aberta { background-color: #e2e8f0; color: #475569; }
+        .status-executando { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-pausada { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+        .status-finalizada { background-color: #dbeafe; color: #1e40af; }
+        
+        .btn-action { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #dee2e6; background: white; }
+        .btn-action:hover { background: #f8f9fa; transform: translateY(-1px); }
+        
+        .section-label { font-size: 0.75rem; font-weight: 700; color: #6c757d; text-uppercase: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        .w-fit { width: fit-content; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. BARRA DE NAVEGAÇÃO -->
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-tools me-2 text-primary"></i> PCM Industrial
+            </a>
+            <div class="d-flex gap-2">
+                <!-- Botão para o Gráfico de Gantt -->
+                <a href="{% url 'pagina_gantt' %}" class="btn btn-outline-info btn-sm rounded-pill px-3">
+                    <i class="fas fa-chart-gantt me-2"></i>Ver Gantt
+                </a>
+                <!-- O botão que chama o Modal (Janela) -->
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow" data-bs-toggle="modal" data-bs-target="#modalAtividade">
+                    <i class="fas fa-plus me-2"></i>Nova Atividade
+                </button>
+                <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                    <i class="fas fa-user-cog me-2"></i>Admin
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        
+        <!-- 2. CARD DE RESUMO -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card p-3 d-flex flex-row align-items-center">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0 small">Total Atividades</h6>
+                        <h4 class="fw-bold mb-0">{{ atividades|length }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TABELA DE ATIVIDADES -->
+        <!-- TABELA 1: FILA DE TRABALHO (PENDENTES) -->
+<div class="card overflow-hidden mb-5">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-list-ol me-2 text-primary"></i>Fila de Trabalho / Kanban</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">TAG/MÁQUINA</th>
+                    <th>ATIVIDADE / TAREFA</th>
+                    <th>COLABORADOR</th>
+                    <th>STATUS</th>
+                    <th class="text-center">AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for atividade in atividades %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-primary">{{ atividade.maquina.codigo }}</div>
+                        <small class="text-muted small text-uppercase">{{ atividade.maquina.nome }}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold">
+                            {% if atividade.eh_emergencial %}<i class="fas fa-exclamation-triangle text-danger me-1"></i>{% endif %}
+                            {{ atividade.descricao }}
+                        </div>
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                            <span class="badge bg-secondary-subtle text-secondary mb-1">Duração: {{ atividade.duracao_formatada }}</span><br>
+                            Início: {{ atividade.inicio_calculado|date:"d/m H:i" }} | Término: {{ atividade.fim_calculado|date:"d/m H:i" }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border p-2">
+                            <i class="fas fa-user me-1 text-secondary"></i> {{ atividade.colaborador.first_name|default:atividade.colaborador.username }}
+                        </span>
+                    </td>
+                    <td><span id="status-badge-{{ atividade.id }}" class="status-badge status-{{ atividade.status }}">{{ atividade.get_status_display }}</span></td>
+                    <td class="text-center">
+                        <div class="btn-group shadow-sm">
+                            <button class="btn btn-action" hx-post="{% url 'alterar_status' atividade.id 'executando' %}" hx-target="#status-badge-{{ atividade.id }}" hx-swap="outerHTML"><i class="fas fa-play text-success"></i></button>
+                            <button class="btn btn-action" hx-post="{% url 'alterar_status' atividade.id 'pausada' %}" hx-target="#status-badge-{{ atividade.id }}" hx-swap="outerHTML"><i class="fas fa-pause text-warning"></i></button>
+                            <!-- Botão de finalizar recarrega a página para mover a atividade para a lista de baixo -->
+                            <button class="btn btn-action" onclick="setTimeout(() => location.reload(), 500)" hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" hx-target="#status-badge-{{ atividade.id }}"><i class="fas fa-check text-primary"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">Nenhuma atividade na fila.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TABELA 2: ATIVIDADES CONCLUÍDAS (HISTÓRICO) -->
+<div class="card overflow-hidden border-0 shadow-sm opacity-75">
+    <div class="card-header bg-light py-3">
+        <h5 class="mb-0 fw-bold text-muted"><i class="fas fa-check-double me-2"></i>Histórico / Atividades Concluídas</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">TAG/MÁQUINA</th>
+                    <th>ATIVIDADE</th>
+                    <th>TÉCNICO</th>
+                    <th>TEMPO REAL GASTO</th>
+                    <th class="text-center">STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for atividade in atividades_concluidas %}
+                <tr class="bg-white">
+                    <td class="ps-4">
+                        <div class="text-muted fw-bold">{{ atividade.maquina.codigo }}</div>
+                    </td>
+                    <td>
+                        <div class="text-muted">{{ atividade.descricao }}</div>
+                        <small class="text-muted" style="font-size: 0.7rem;">Concluído em: {{ atividade.fim_calculado|date:"d/m H:i" }}</small>
+                    </td>
+                    <td><small>{{ atividade.colaborador.first_name|default:atividade.colaborador.username }}</small></td>
+                    <td class="text-center font-monospace">{{ atividade.tempo_total_gasto|default:"00:00:00" }}</td>
+                    <td class="text-center"><span class="badge bg-primary-subtle text-primary border border-primary-subtle">Finalizada</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-3 text-muted">Nenhum histórico disponível.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    <!-- 4. A JANELA (MODAL) PARA NOVA ATIVIDADE -->
+    <div class="modal fade" id="modalAtividade" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="modalLabel">Agendar Nova Atividade</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        
+                        <div class="mb-3">
+                            <label class="section-label">Máquina / Equipamento</label>
+                            {{ form.maquina }}
+                        </div>
+
+                        <div class="form-check form-switch mb-3 p-3 bg-light rounded border">
+                            {{ form.eh_preventiva }}
+                            <label class="form-check-label fw-bold text-primary" for="checkPreventiva">
+                                <i class="fas fa-shield-alt me-1"></i> Manutenção Preventiva?
+                            </label>
+                        </div>
+
+                        <div id="sectionPreventiva" class="mb-3 d-none border-start border-info border-4 ps-3 py-2 bg-info bg-opacity-10 rounded">
+                            <label class="section-label text-info">Procedimento Padrão</label>
+                            {{ form.procedimento_base }}
+                        </div>
+
+                        <div id="sectionDescricao" class="mb-3">
+                            <label class="section-label">Descrição da Atividade</label>
+                            {{ form.descricao }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="section-label">Início Planejado (Referência)</label>
+                            {{ form.data_planejada }}
+                        </div>
+
+                        <!-- TOGGLE EMERGENCIAL -->
+                        <div class="form-check form-switch mb-3 p-3 bg-danger bg-opacity-10 rounded border border-danger">
+                            {{ form.eh_emergencial }}
+                            <label class="form-check-label fw-bold text-danger" for="id_eh_emergencial">
+                                <i class="fas fa-exclamation-triangle me-1"></i> ATIVIDADE EMERGENCIAL (INTERROMPER OUTRAS)
+                            </label>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="section-label">Técnico Responsável</label>
+                                {{ form.colaborador }}
+                            </div>
+                            
+                            <div id="sectionTempo" class="col-md-12">
+                                <label class="section-label">Duração Estimada</label>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                            {{ form.tempo_valor }}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        {{ form.tempo_unidade }}
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1 d-block" style="font-size: 0.65rem;">O término será calculado sequencialmente após a última tarefa do técnico.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Salvar Atividade</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const check = document.getElementById('checkPreventiva');
+            const sectionPrev = document.getElementById('sectionPreventiva');
+            const sectionDesc = document.getElementById('sectionDescricao');
+            const sectionTempo = document.getElementById('sectionTempo');
+
+            if(check) {
+                check.addEventListener('change', function() {
+                    if(this.checked) {
+                        sectionPrev.classList.remove('d-none');
+                        sectionDesc.classList.add('d-none');
+                        sectionTempo.classList.add('d-none');
+                    } else {
+                        sectionPrev.classList.add('d-none');
+                        sectionDesc.classList.remove('d-none');
+                        sectionTempo.classList.remove('d-none');
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

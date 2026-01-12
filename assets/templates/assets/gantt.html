@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>PCM | Cronograma Dinâmico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+    <style>
+        .navbar { background-color: #1a202c; }
+        .gantt-status-aberta .bar { fill: #a1a1aa; }
+        .gantt-status-executando .bar { fill: #22c55e; }
+        .gantt-status-pausada .bar { fill: #f59e0b; }
+        .gantt-status-finalizada .bar { fill: #3b82f6; }
+        .gantt-container { background: white; border-radius: 8px; overflow: auto; min-height: 500px; }
+        /* Adicione no <style> do seu gantt.html */
+        .gantt-emergencial .bar { 
+            fill: #ff0000 !important; 
+            stroke: #8b0000;
+            stroke-width: 2;
+        }
+        .gantt-emergencial .bar-label {
+            fill: #ffffff !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark mb-4 shadow">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="/"> <i class="fas fa-chevron-left me-2"></i> Painel Operacional </a>
+            <span class="text-white small">PLANEJAMENTO VISUAL</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="card p-4 shadow-sm border-0" style="border-radius: 15px;">
+            <div class="d-flex justify-content-between mb-4">
+                <h4 class="fw-bold">Linha do Tempo de Manutenção</h4>
+                <div class="btn-group shadow-sm">
+                    <button class="btn btn-white border" onclick="changeView('Day')">Dia</button>
+                    <button class="btn btn-white border" onclick="changeView('Week')">Semana</button>
+                    <button class="btn btn-white border" onclick="changeView('Month')">Mês</button>
+                </div>
+            </div>
+
+            <div class="gantt-container border">
+                <svg id="gantt-target"></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS (Note a ordem: Snap.svg é obrigatório antes do Gantt) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+
+    <script>
+        let gantt_chart;
+
+        async function initGantt() {
+            try {
+                const res = await fetch('/api/gantt/dados/');
+                const tasks = await res.json();
+
+                console.log("Dados formatados:", tasks);
+
+                if (tasks.length === 0) {
+                    document.querySelector('.gantt-container').innerHTML = 
+                        "<div class='p-5 text-center text-muted'>Nenhuma tarefa encontrada.</div>";
+                    return;
+                }
+
+                // REMOVEMOS o 'language: pt-br' que estava causando o erro de leitura '11'
+                gantt_chart = new Gantt("#gantt-target", tasks, {
+                    view_mode: 'Day',
+                    column_width: 40,
+                    bar_height: 30,
+                    padding: 18,
+                    on_click: task => console.log(task),
+                });
+            } catch (err) {
+                console.error("Erro detalhado:", err);
+                document.querySelector('.gantt-container').innerHTML = 
+                    "<div class='p-5 text-center text-danger'>Erro ao processar as datas do gráfico.</div>";
+            }
+        }
+
+        function changeView(mode) {
+            if(gantt_chart) gantt_chart.change_view_mode(mode);
+        }
+
+        // Tenta carregar assim que a página abrir
+        window.onload = initGantt;
+    </script>
+</body>
+</html>
