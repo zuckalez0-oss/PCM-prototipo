@@ -32,6 +32,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['69.62.104.116','pcm.lypsyos.com','localhost','db']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://pcm.lypsyos.com',
+]
 
 # Application definition
 
