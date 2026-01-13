@@ -9,5 +9,8 @@ urlpatterns = [
     path('gantt/', views.pagina_gantt, name='pagina_gantt'),
     path('api/gantt/dados/', views.dados_gantt, name='dados_gantt'),
 
-    
+    path('chamado/novo/', views.abrir_chamado, name='abrir_chamado'),
+    path('chamado/aprovar/<int:chamado_id>/', views.aprovar_chamado, name='aprovar_chamado'),
+    path('chamado/recusar/<int:chamado_id>/', views.recusar_chamado, name='recusar_chamado'),
+    path('atividade/cancelar/<int:atividade_id>/', views.cancelar_atividade, name='cancelar_atividade'),
 ]

@@ -25,6 +25,7 @@ class Atividade(models.Model):
         ('pausada', 'Pausada'),
         ('finalizada', 'Finalizada'),
         ('parada', 'Parada/Cancelada'),
+        ('cancelada', 'Cancelada'),
     ]
 
     maquina = models.ForeignKey(Maquina, on_delete=models.CASCADE)
@@ -32,6 +33,8 @@ class Atividade(models.Model):
     colaborador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberta')
+    motivo_cancelamento = models.TextField(null=True, blank=True)
+    instrucoes_tecnicas = models.TextField(null=True, blank=True) 
     
     # Planejamento (Gantt)
     duracao_estimada = models.DurationField(help_text="Tempo previsto (Ex: 02:00:00 para 2h)")
@@ -54,3 +57,28 @@ class Atividade(models.Model):
 
     def __str__(self):
         return f"{self.maquina.codigo} - {self.descricao}"
+    
+class Chamado(models.Model):
+    STATUS_CHAMADO = [
+        ('pendente', 'Pendente (Triagem)'),
+        ('aprovado', 'Aprovado (Virou OS)'),
+        ('recusado', 'Recusado'),
+        
+    ]
+    motivo_resposta = models.TextField(null=True, blank=True, verbose_name="Motivo da Recusa/Resposta")
+    PRIORIDADE_CHOICES = [
+        (1, 'Baixa - Pode aguardar'),
+        (2, 'Média - Monitorar'),
+        (3, 'Alta - Urgente'),
+    ]
+
+    maquina = models.ForeignKey(Maquina, on_delete=models.CASCADE)
+    requisitante = models.ForeignKey(User, on_delete=models.CASCADE)
+    descricao_problema = models.TextField()
+    prioridade_indicada = models.IntegerField(choices=PRIORIDADE_CHOICES, default=1)
+    maquina_parada = models.BooleanField(default=False)
+    data_abertura = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHAMADO, default='pendente')
+
+    def __str__(self):
+        return f"Chamado {self.id} - {self.maquina.codigo}"
