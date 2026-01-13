@@ -63,7 +63,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -142,3 +142,8 @@ STATIC_URL = '/static/'
 # Esta pasta será criada automaticamente pelo Django para guardar 
 # os arquivos do Admin e futuros arquivos que você criar.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+LOGIN_REDIRECT_URL = '/'
+
+# Depois de deslogar, vá para a página de login de novo
+LOGOUT_REDIRECT_URL = '/accounts/login/'
