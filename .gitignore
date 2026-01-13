@@ -1,0 +1,33 @@
+# Ambientes Virtuais (Pasta onde ficam as bibliotecas instaladas)
+venv/
+env/
+.venv/
+ENV/
+
+# Python (Arquivos temporários que o Python cria ao rodar)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Banco de Dados Local (Você usará Postgres no VPS, não envie o SQLite)
+*.sqlite3
+*.sqlite3-journal
+
+# Arquivos de Configuração Sensíveis (Senhas e Chaves)
+.env
+local_settings.py
+
+# Arquivos de Static e Media (Gerados pelo Django no servidor)
+staticfiles/
+media/
+
+# Logs (Arquivos de erro)
+*.log
+
+# Pastas de Editores (VS Code, PyCharm)
+.vscode/
+.idea/
+
+# Arquivos do Sistema (Windows/Mac)
+Thumbs.db
+.DS_Store
