@@ -4,7 +4,9 @@ from django.utils import timezone  # Adicionado: timezone para as datas
 from datetime import timedelta     # Adicionado: timedelta para cálculos de tempo
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
-from django.contrib import messages # Importe o sistema de mensagens
+from django.contrib import messages 
+# Importe o sistema de mensagens
+from django.contrib.auth.decorators import login_required
 
 # Importe o novo modelo Chamado aqui
 from .models import Atividade, Maquina, ProcedimentoPreventivo, Chamado 
@@ -123,7 +125,7 @@ def alterar_status(request, atividade_id, novo_status):
 def pagina_gantt(request):
     return render(request, 'assets/gantt.html')
 # ---------------------------------------------
-
+@login_required
 def abrir_chamado(request):
     if request.method == 'POST':
         maquina_id = request.POST.get('maquina')
