@@ -130,3 +130,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+import os # Garanta que o 'import os' existe no topo do arquivo
+
+STATIC_URL = '/static/'
+
+# Esta pasta será criada automaticamente pelo Django para guardar 
+# os arquivos do Admin e futuros arquivos que você criar.
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
