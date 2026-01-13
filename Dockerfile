@@ -25,5 +25,5 @@ COPY . .
 EXPOSE 8000
 
 # Comando para rodar a aplicação usando Gunicorn
-# IMPORTANTE: Troque 'nome_do_projeto' pelo nome da pasta onde está seu settings.py
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", ".wsgi:application"]
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "/root/PCM-prototipo/core.wsgi:application"]

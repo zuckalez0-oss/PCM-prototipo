@@ -1,0 +1,33 @@
+services:
+  # Serviço do Banco de Dados
+  db:
+    image: postgres:15
+    container_name: postgres_pcm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    restart: always
+
+  # Serviço da Aplicação Django
+  web:
+    build: .
+    container_name: django_pcm
+    command: gunicorn --bind 0.0.0.0:8000 nome_do_projeto.wsgi:application
+    volumes:
+      - .:/app
+      - ./static:/app/static
+      - ./media:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    restart: always
+
+# Volumes persistentes (para não perder dados se apagar o container)
+volumes:
+  postgres_data:

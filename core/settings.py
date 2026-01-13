@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'pcm_db'),
         'USER': os.getenv('DB_USER', 'pcm_user'), # Se o env falhar, ele usa pcm_user
         'PASSWORD': os.getenv('DB_PASSWORD', 'as4590kx95'), # Coloque sua senha aqui também como garantia
-        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'HOST': os.getenv('DB_HOST', 'db'), # 'db' é o nome do serviço do banco no docker-compose
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
