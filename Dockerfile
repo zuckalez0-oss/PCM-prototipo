@@ -1,5 +1,5 @@
 # Usa uma imagem leve do Python
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Evita que o Python grave arquivos .pyc e garante logs em tempo real
 ENV PYTHONDONTWRITEBYTECODE 1
