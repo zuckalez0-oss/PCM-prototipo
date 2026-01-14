@@ -5,6 +5,8 @@ services:
     container_name: postgres_pcm
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -27,7 +29,13 @@ services:
     env_file:
       - .env
     restart: always
+    networks:
+    - default
+    - proxy_net
 
 # Volumes persistentes (para não perder dados se apagar o container)
 volumes:
   postgres_data:
+networks:         # <--- ADICIONE ISSO NO FINAL
+  proxy_net:
+    external: true
