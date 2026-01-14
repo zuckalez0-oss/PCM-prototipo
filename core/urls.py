@@ -19,6 +19,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('', include('assets.urls')), # Tudo que começar com /ativos/ vai para o seu app
-   path('accounts/', include('django.contrib.auth.urls')),
+   
 ]
