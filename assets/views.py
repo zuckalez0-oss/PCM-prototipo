@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages 
 # Importe o sistema de mensagens
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
 # Importe o novo modelo Chamado aqui
 from .models import Atividade, Maquina, ProcedimentoPreventivo, Chamado 
@@ -207,4 +208,8 @@ def dados_gantt(request):
     except Exception as e:
         print(f"ERRO CRÍTICO NO GANTT: {e}")
         return JsonResponse({'error': str(e)}, status=500)
+
+def logout_view(request):
+    logout(request)
+    return redirect('/accounts/login/')
     
