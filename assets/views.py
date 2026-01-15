@@ -215,4 +215,8 @@ def dados_gantt(request):
     except Exception as e:
         print(f"ERRO CRÍTICO NO GANTT: {e}")
         return JsonResponse({'error': str(e)}, status=500)
-    
+@login_required
+def logout_view(request):
+    logout(request)
+    messages.info(request, "Você saiu do sistema com sucesso.")
+    return redirect('login') # Ou para onde você quiser mandar o usuário após sair
