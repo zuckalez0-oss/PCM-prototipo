@@ -16,7 +16,7 @@ def formatar_duracao(td):
 def sequenciar_atividades(atividades_queryset):
     """
     Lógica central que empilha as atividades por colaborador.
-    Melhoria: Trata corretamente atividades sem técnico (Aguardando Alocação).
+    Adaptado para Multiple colaboradores.
     """
     colaboradores_progresso = {}
     atividades_sequenciadas = []
@@ -26,38 +26,40 @@ def sequenciar_atividades(atividades_queryset):
 
     for act in atividades_ordenadas:
         # --- SEGURANÇA DE DADOS ---
-        # Garante que temos uma data de referência e uma duração mínima
         data_base = act.data_planejada if act.data_planejada else timezone.now()
         duracao = act.duracao_estimada if act.duracao_estimada and act.duracao_estimada.total_seconds() > 0 else timedelta(hours=1)
         
         # --- LÓGICA DE SEQUENCIAMENTO POR TÉCNICO ---
-        if act.colaborador:
-            tecnico_id = act.colaborador.id
+        # Buscamos todos os técnicos associados à atividade
+        tecnicos = act.colaboradores.all()
+        
+        if tecnicos.exists():
+            # Para fins de sequenciamento no gráfico, usamos o "primeiro" técnico como âncora
+            tecnico_principal = tecnicos.first()
+            tecnico_id = tecnico_principal.id
             
             # Se é a primeira vez que vemos este técnico, o cursor de tempo dele começa na data da OS
             if tecnico_id not in colaboradores_progresso:
                 colaboradores_progresso[tecnico_id] = data_base
 
-            # Início é o máximo entre: Quando ele ficou livre OU a data planejada da OS
+            # Início é o máximo entre: Quando o técnico principal ficou livre OU a data planejada da OS
             inicio_efetivo = max(data_base, colaboradores_progresso[tecnico_id])
             
-            # Se for emergencial, ela "fura a fila" e começa exatamente quando foi planejada
+            # Se for emergencial, ela "fura a fila"
             if act.eh_emergencial:
                 inicio_efetivo = data_base
 
             fim_efetivo = inicio_efetivo + duracao
 
-            # Atualiza o cursor do técnico: ele só estará livre após o fim desta atividade
+            # Atualiza o cursor do técnico principal
             colaboradores_progresso[tecnico_id] = fim_efetivo
         
         else:
             # --- ATIVIDADES SEM TÉCNICO ---
-            # Não empilham. Ficam na data planejada original até alguém ser alocado.
             inicio_efetivo = data_base
             fim_efetivo = inicio_efetivo + duracao
 
         # --- ANEXA OS DADOS CALCULADOS AO OBJETO ---
-        # Isso permite que o HTML acesse {{ atividade.inicio_calculado }} sem dar erro
         act.inicio_calculado = inicio_efetivo
         act.fim_calculado = fim_efetivo
         act.duracao_formatada = formatar_duracao(duracao)
