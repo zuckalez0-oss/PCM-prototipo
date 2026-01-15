@@ -247,7 +247,7 @@
                                     {% empty %}---{% endfor %}
                                 </small>
                             </td>
-                            <td class="text-center font-monospace small">{{ atividade.tempo_total_gasto|default:"00:00:00" }}</td>
+                            <td class="text-center font-monospace fw-bold text-primary">{{ atividade.tempo_decimal|floatformat:2 }}h</td>
                             <td class="text-center"><span class="badge bg-primary-subtle text-primary border-0">CONCLUÍDO</span></td>
                         </tr>
                         {% endfor %}

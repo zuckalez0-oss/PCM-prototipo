@@ -29,9 +29,9 @@ def lista_atividades(request):
         form = AtividadeForm(request.POST)
         if form.is_valid():
             atividade = form.save(commit=False)
-            
+            ## -- sol de ajuste, colocar tempo real com 2 casas decimais -- ##
             # 1. Lógica de Duração Flexível
-            valor = int(form.cleaned_data.get('tempo_valor', 0))
+            valor = int(form.cleaned_data.get('tempo_valor', 0)) 
             unidade = form.cleaned_data.get('tempo_unidade', 'horas')
             
             if unidade == 'dias':
@@ -197,9 +197,6 @@ def aprovar_chamado(request, chamado_id):
 
 @login_required
 def dados_gantt(request):
-    """
-    API para o Gantt com correção na captura do nome do colaborador.
-    """
     try:
         atividades_db = Atividade.objects.all()
         atividades = sequenciar_atividades(atividades_db)
@@ -211,14 +208,14 @@ def dados_gantt(request):
             elif act.status == 'finalizada': progresso = 100
             elif act.status == 'pausada': progresso = 25
 
-            # MELHORIA: Captura robusta do nome do técnico
             tecnicos_nomes = ", ".join([t.first_name or t.username for t in act.colaboradores.all()])
-            if not tecnicos_nomes:
-                tecnicos_nomes = "Sem Técnico"
+            
+            # Usando o tempo decimal formatado
+            tempo_exibicao = f"{act.tempo_decimal:.2f}h"
 
             dados.append({
                 'id': str(act.id),
-                'name': f"[{tecnicos_nomes}] {act.maquina.codigo}: {act.descricao[:15]}",
+                'name': f"[{tecnicos_nomes}] ({tempo_exibicao}) {act.maquina.codigo}: {act.descricao[:15]}",
                 'start': act.inicio_calculado.isoformat(),
                 'end': act.fim_calculado.isoformat(),
                 'progress': progresso,

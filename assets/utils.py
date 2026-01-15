@@ -16,7 +16,7 @@ def formatar_duracao(td):
 def sequenciar_atividades(atividades_queryset):
     """
     Lógica central que empilha as atividades por colaborador.
-    Adaptado para Multiple colaboradores.
+    Adaptado para Multiple colaboradores e Tempo Decimal (H.H).
     """
     colaboradores_progresso = {}
     atividades_sequenciadas = []
@@ -25,12 +25,19 @@ def sequenciar_atividades(atividades_queryset):
     atividades_ordenadas = atividades_queryset.order_by('-eh_emergencial', 'data_planejada')
 
     for act in atividades_ordenadas:
+        # --- CÁLCULO DO TEMPO REAL DECIMAL (PADRÃO DE MERCADO) ---
+        if act.tempo_total_gasto:
+            total_segundos = act.tempo_total_gasto.total_seconds()
+            # Converte segundos para horas com 2 casas decimais
+            act.tempo_decimal = round(total_segundos / 3600, 2)
+        else:
+            act.tempo_decimal = 0.00
+
         # --- SEGURANÇA DE DADOS ---
         data_base = act.data_planejada if act.data_planejada else timezone.now()
         duracao = act.duracao_estimada if act.duracao_estimada and act.duracao_estimada.total_seconds() > 0 else timedelta(hours=1)
         
         # --- LÓGICA DE SEQUENCIAMENTO POR TÉCNICO ---
-        # Buscamos todos os técnicos associados à atividade
         tecnicos = act.colaboradores.all()
         
         if tecnicos.exists():
@@ -38,24 +45,18 @@ def sequenciar_atividades(atividades_queryset):
             tecnico_principal = tecnicos.first()
             tecnico_id = tecnico_principal.id
             
-            # Se é a primeira vez que vemos este técnico, o cursor de tempo dele começa na data da OS
             if tecnico_id not in colaboradores_progresso:
                 colaboradores_progresso[tecnico_id] = data_base
 
-            # Início é o máximo entre: Quando o técnico principal ficou livre OU a data planejada da OS
             inicio_efetivo = max(data_base, colaboradores_progresso[tecnico_id])
             
-            # Se for emergencial, ela "fura a fila"
             if act.eh_emergencial:
                 inicio_efetivo = data_base
 
             fim_efetivo = inicio_efetivo + duracao
-
-            # Atualiza o cursor do técnico principal
             colaboradores_progresso[tecnico_id] = fim_efetivo
         
         else:
-            # --- ATIVIDADES SEM TÉCNICO ---
             inicio_efetivo = data_base
             fim_efetivo = inicio_efetivo + duracao
 
