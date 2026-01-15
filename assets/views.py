@@ -45,6 +45,7 @@ def lista_atividades(request):
                 atividade.duracao_estimada = atividade.procedimento_base.duracao_estimada_padrao
             
             atividade.save()
+            form.save_m2m()
             return redirect('lista_atividades')
     else:
         form = AtividadeForm()
@@ -97,34 +98,37 @@ def cancelar_atividade(request, atividade_id):
 @csrf_exempt
 @login_required
 def alterar_status(request, atividade_id, novo_status):
-    """
-    Gerencia o cronômetro de tempo real via HTMX.
-    """
     atividade = get_object_or_404(Atividade, id=atividade_id)
     
-    # REGRA DE NEGÓCIO: Não pode finalizar ou iniciar sem técnico
-    if novo_status in ['executando', 'finalizada'] and not atividade.colaborador:
+    # Validação de Técnicos (ManyToManyField)
+    if novo_status in ['executando', 'finalizada'] and not atividade.colaboradores.exists():
         return HttpResponse(
-            f'<script>alert("AÇÃO INVÁLIDA: Atribua um técnico à OS #{atividade.id} antes de prosseguir!");</script>'
+            f'<script>alert("AÇÃO INVÁLIDA: Atribua ao menos um técnico!");</script>'
             f'<span id="status-badge-{atividade.id}" class="status-badge status-{atividade.status}">{atividade.get_status_display()}</span>'
         )
 
     agora = timezone.now()
 
+    if novo_status == 'pausada':
+        motivo = request.POST.get(f'justificativa{atividade_id}')
+        atividade.motivo_pausa = motivo
+    elif novo_status == 'executando':
+        atividade.motivo_pausa = "" # Limpa o motivo ao retomar
+        atividade.ultima_interacao = agora
+
+    # Lógica de tempo acumulado
     if atividade.status == 'executando' and novo_status in ['pausada', 'finalizada']:
         if atividade.ultima_interacao:
-            decorrido = agora - atividade.ultima_interacao
-            atividade.tempo_total_gasto += decorrido
-            
-    if novo_status == 'executando':
-        atividade.ultima_interacao = agora
+            atividade.tempo_total_gasto += (agora - atividade.ultima_interacao)
 
     atividade.status = novo_status
     atividade.save()
     
+    # Retorna o badge e um comando para recarregar a página e mostrar o motivo abaixo do badge
     return HttpResponse(
         f'<span id="status-badge-{atividade.id}" class="status-badge status-{atividade.status}">'
         f'{atividade.get_status_display()}</span>'
+        f'<script>setTimeout(()=>location.reload(), 300)</script>'
     )
 
 @login_required
@@ -158,21 +162,20 @@ def abrir_chamado(request):
 def aprovar_chamado(request, chamado_id):
     if request.method == 'POST':
         chamado = get_object_or_404(Chamado, id=chamado_id)
-        tecnico_id = request.POST.get('tecnico')
+        tecnicos_ids = request.POST.getlist('tecnico') # Pega a lista de IDs
         
-        if not tecnico_id:
-            messages.error(request, "Selecione um técnico para aprovar o chamado.")
+        if not tecnicos_ids:
+            messages.error(request, "Selecione ao menos um técnico.")
             return redirect('lista_atividades')
 
-        # Cria a OS já com o técnico
-        Atividade.objects.create(
+        nova_os = Atividade.objects.create(
             maquina=chamado.maquina,
-            colaborador_id=tecnico_id, # Atribui o técnico escolhido
             descricao=f"CHAMADO #{chamado.id}: {chamado.descricao_problema[:50]}",
             data_planejada=timezone.now(),
             duracao_estimada=timedelta(hours=2),
             status='aberta'
         )
+        nova_os.colaboradores.set(tecnicos_ids) # Salva a relação ManyToMany
         
         chamado.status = 'aprovado'
         chamado.save()
@@ -196,14 +199,13 @@ def dados_gantt(request):
             elif act.status == 'pausada': progresso = 25
 
             # MELHORIA: Captura robusta do nome do técnico
-            tecnico_nome = "Sem Técnico"
-            if act.colaborador:
-                # Tenta primeiro o nome, se não tiver usa o login (username)
-                tecnico_nome = act.colaborador.first_name if act.colaborador.first_name else act.colaborador.username
+            tecnicos_nomes = ", ".join([t.first_name or t.username for t in act.colaboradores.all()])
+            if not tecnicos_nomes:
+                tecnicos_nomes = "Sem Técnico"
 
             dados.append({
                 'id': str(act.id),
-                'name': f"[{tecnico_nome}] ({act.duracao_formatada}) {act.maquina.codigo}: {act.descricao[:15]}",
+                'name': f"[{tecnicos_nomes}] {act.maquina.codigo}: {act.descricao[:15]}",
                 'start': act.inicio_calculado.isoformat(),
                 'end': act.fim_calculado.isoformat(),
                 'progress': progresso,
@@ -211,6 +213,8 @@ def dados_gantt(request):
             })
         
         return JsonResponse(dados, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
     
     except Exception as e:
         print(f"ERRO CRÍTICO NO GANTT: {e}")

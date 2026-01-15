@@ -12,22 +12,24 @@ class ProcedimentoPreventivoAdmin(admin.ModelAdmin):
 
 @admin.register(Atividade)
 class AtividadeAdmin(admin.ModelAdmin):
+    filter_horizontal = ('colaboradores',) 
+    list_display = ('id', 'maquina', 'status', 'eh_emergencial')
     # O que aparece na tabela principal do Admin
-    list_display = ('id', 'maquina', 'descricao', 'colaborador', 'status', 'data_planejada', 'tempo_total_gasto')
+    list_display = ('id', 'maquina', 'descricao', 'colaboradores', 'status', 'data_planejada', 'tempo_total_gasto')
     
     # Filtros laterais para facilitar a vida do gestor (Escalabilidade!)
-    list_filter = ('status', 'colaborador', 'maquina', 'data_planejada')
-    
+    list_filter = ('status', 'colaboradores', 'maquina', 'data_planejada')
+
     # Campos que permitem busca rápida
     search_fields = ('descricao', 'maquina__nome', 'maquina__codigo')
     
     # Permite editar o status e o colaborador direto na lista, sem precisar abrir a atividade
-    list_editable = ('status', 'colaborador')
+    list_editable = ('status', 'colaboradores')
 
     # Organização dos campos dentro do formulário de edição
     fieldsets = (
         ('Informações Básicas', {
-            'fields': ('maquina', 'descricao', 'colaborador', 'status')
+            'fields': ('maquina', 'descricao', 'colaboradores', 'status')
         }),
         ('Planejamento (Gantt)', {
             'fields': ('duracao_estimada', 'data_planejada')
@@ -36,6 +38,6 @@ class AtividadeAdmin(admin.ModelAdmin):
             'fields': ('tempo_total_gasto', 'ultima_interacao'),
             'classes': ('collapse',) # Deixa essa seção escondida por padrão
         }),
-
+    
         
     )
