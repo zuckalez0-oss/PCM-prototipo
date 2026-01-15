@@ -30,7 +30,7 @@ class Atividade(models.Model):
 
     maquina = models.ForeignKey(Maquina, on_delete=models.CASCADE)
     descricao = models.CharField(max_length=255) # Ex: Troca de Rolamento
-    colaborador = models.ManyToManyField(User, related_name='atividades')
+    colaboradores = models.ManyToManyField(User, related_name='atividades')
     motivo_pausa = models.TextField(blank=True, null=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberta')
