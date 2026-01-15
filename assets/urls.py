@@ -14,4 +14,5 @@ urlpatterns = [
     path('chamado/recusar/<int:chamado_id>/', views.recusar_chamado, name='recusar_chamado'),
     path('atividade/cancelar/<int:atividade_id>/', views.cancelar_atividade, name='cancelar_atividade'),
     path('logout/', views.logout_view, name='logout'),
+    path('atividade/<int:atividade_id>/atribuir/', views.atribuir_tecnicos, name='atribuir_tecnicos'),
 ]

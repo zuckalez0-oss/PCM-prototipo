@@ -132,6 +132,19 @@ def alterar_status(request, atividade_id, novo_status):
     )
 
 @login_required
+def atribuir_tecnicos(request, atividade_id):
+    if request.method == 'POST':
+        atividade = get_object_or_404(Atividade, id=atividade_id)
+        # Pega a lista de IDs de técnicos enviados pelo formulário
+        tecnicos_ids = request.POST.getlist('tecnicos')
+        
+        # O método .set() remove os antigos e adiciona os novos automaticamente
+        atividade.colaboradores.set(tecnicos_ids)
+        
+        messages.success(request, f"Equipe da OS #{atividade.id} atualizada!")
+    return redirect('lista_atividades')
+
+@login_required
 def pagina_gantt(request):
     return render(request, 'assets/gantt.html')
 # ---------------------------------------------
