@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from django.contrib import messages 
 # Importe o sistema de mensagens
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
 
 # Importe o novo modelo Chamado aqui
 from .models import Atividade, Maquina, ProcedimentoPreventivo, Chamado 
@@ -19,7 +18,6 @@ from .utils import sequenciar_atividades
 # IMPORTANTE: Certifique-se de que o arquivo utils.py existe com a função sequenciar_atividades
 from .utils import sequenciar_atividades 
 
-@login_required
 def lista_atividades(request):
     """
     Exibe a fila de trabalho e o histórico, separando as concluídas das demais.
@@ -73,7 +71,6 @@ def lista_atividades(request):
         'form': form
     })
 
-@login_required
 def recusar_chamado(request, chamado_id):
     if request.method == 'POST':
         chamado = get_object_or_404(Chamado, id=chamado_id)
@@ -84,7 +81,6 @@ def recusar_chamado(request, chamado_id):
         messages.warning(request, f"Chamado #{chamado.id} recusado.")
     return redirect('lista_atividades')
 
-@login_required
 def cancelar_atividade(request, atividade_id):
     if request.method == 'POST':
         atividade = get_object_or_404(Atividade, id=atividade_id)
@@ -95,7 +91,6 @@ def cancelar_atividade(request, atividade_id):
     return redirect('lista_atividades')
 
 @csrf_exempt
-@login_required
 def alterar_status(request, atividade_id, novo_status):
     """
     Gerencia o cronômetro de tempo real via HTMX.
@@ -127,7 +122,6 @@ def alterar_status(request, atividade_id, novo_status):
         f'{atividade.get_status_display()}</span>'
     )
 
-@login_required
 def pagina_gantt(request):
     return render(request, 'assets/gantt.html')
 # ---------------------------------------------
@@ -154,7 +148,6 @@ def abrir_chamado(request):
     return render(request, 'assets/abrir_chamado.html', {'maquinas': maquinas})
 # ---------------------------------------------
 
-@login_required
 def aprovar_chamado(request, chamado_id):
     if request.method == 'POST':
         chamado = get_object_or_404(Chamado, id=chamado_id)
@@ -179,7 +172,6 @@ def aprovar_chamado(request, chamado_id):
         messages.success(request, "Chamado aprovado e OS gerada!")
     return redirect('lista_atividades')
 
-@login_required
 def dados_gantt(request):
     """
     API para o Gantt com correção na captura do nome do colaborador.
