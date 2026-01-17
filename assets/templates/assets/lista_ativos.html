@@ -71,6 +71,48 @@
 
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Adicione isso dentro da tag <style> no head */
+        .tech-checkbox-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .tech-option {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 0; /* Remove margem padrão do label */
+            display: flex;
+            align-items: center;
+        }
+        .tech-option:hover {
+            background-color: #f8fafc;
+        }
+        .tech-option:last-child {
+            border-bottom: none;
+        }
+        .tech-option input[type="checkbox"] {
+            width: 1.2em;
+            height: 1.2em;
+            cursor: pointer;
+        }
+        .tech-info {
+            margin-left: 12px;
+        }
+        .tech-name {
+            font-weight: 600;
+            color: #334155;
+            display: block;
+        }
+        .tech-role {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+
     </style>
 </head>
 <body>
@@ -252,16 +294,37 @@
                         <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content border-0 shadow">
-                                    <div class="modal-header"><h6 class="modal-title fw-bold">Equipe</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                    <div class="modal-body">
-                                        {% csrf_token %}
-                                        <div class="tech-select-container">
-                                            <select name="tecnicos" class="form-select" multiple size="5">
-                                                {% for t in tecnicos %}<option value="{{ t.id }}" {% if t in atividade.colaboradores.all %}selected{% endif %}>{{ t.first_name|default:t.username }}</option>{% endfor %}
-                                            </select>
+                                    {% csrf_token %}
+                                    
+                                    <div class="modal-header bg-white border-bottom-0 pb-0">
+                                        <div>
+                                            <h6 class="modal-title fw-bold text-dark">Gerenciar Equipe</h6>
+                                            <small class="text-muted">OS #{{ atividade.id }} - {{ atividade.maquina.codigo }}</small>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body pt-3">
+                                        <p class="small text-muted mb-2 fw-bold text-uppercase">Selecione os técnicos:</p>
+                                        
+                                        <div class="tech-checkbox-list">
+                                            {% for t in tecnicos %}
+                                            <label class="tech-option">
+                                                <input class="form-check-input" type="checkbox" name="tecnicos" value="{{ t.id }}" 
+                                                    {% if t in atividade.colaboradores.all %}checked{% endif %}>
+                                                <div class="tech-info">
+                                                    <span class="tech-name">{{ t.first_name|default:t.username }}</span>
+                                                    <span class="tech-role">Técnico de Manutenção</span>
+                                                </div>
+                                            </label>
+                                            {% endfor %}
                                         </div>
                                     </div>
-                                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
+
+                                    <div class="modal-footer border-top-0 bg-light">
+                                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Alterações</button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
