@@ -6,7 +6,6 @@ urlpatterns = [
     # O segundo é a função dentro do views.py
     path('', views.lista_atividades, name='lista_atividades'), 
     path('status/<int:atividade_id>/<str:novo_status>/', views.alterar_status, name='alterar_status'),
-    path('gantt/', views.pagina_gantt, name='pagina_gantt'),
     path('dashboard/', views.dashboard_analitico, name='dashboard_analitico'),
     path('api/gantt/dados/', views.dados_gantt, name='dados_gantt'),
 
