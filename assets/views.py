@@ -11,6 +11,7 @@ from itertools import chain
 from operator import attrgetter
 from django.db.models import Count, Q
 
+
 # Seus Models e Forms
 from .models import Atividade, AtividadeLog, Maquina, Chamado, PlanoPreventivo
 from .forms import AtividadeForm
@@ -45,67 +46,98 @@ def verificar_e_gerar_preventivas():
 
 @login_required
 def dashboard_analitico(request):
-    """
-    View Híbrida: Exibe Sidebar com Gráficos + Gantt Central.
-    """
-    
     # 1. RODA O ROBÔ
     novas_ops = verificar_e_gerar_preventivas()
     if novas_ops > 0:
-        messages.info(request, f"{novas_ops} novas Manutenções Preventivas foram geradas automaticamente.")
+        messages.info(request, f"{novas_ops} preventivas geradas.")
 
-    # 2. DADOS PARA GRÁFICOS (KPIs)
-    
-    # KPI A: Top 5 Máquinas que mais quebram
-    quebras_por_maquina = Atividade.objects.filter(eh_preventiva=False) \
-        .values('maquina__codigo') \
-        .annotate(total=Count('id')) \
-        .order_by('-total')[:5]
-    
+    # 2. Lógica para Salvar Nova Tarefa (Se vier do Modal do Dashboard)
+    if request.method == 'POST':
+        form = AtividadeForm(request.POST)
+        if form.is_valid():
+            atividade = form.save(commit=False)
+            valor = int(form.cleaned_data.get('tempo_valor', 0)) 
+            unidade = form.cleaned_data.get('tempo_unidade', 'horas')
+            
+            if unidade == 'dias': atividade.duracao_estimada = timedelta(days=valor)
+            else: atividade.duracao_estimada = timedelta(hours=valor)
+
+            if atividade.eh_preventiva and atividade.procedimento_base:
+                atividade.descricao = f"PREVENTIVA: {atividade.procedimento_base.nome}"
+                atividade.duracao_estimada = atividade.procedimento_base.duracao_estimada_padrao
+            
+            atividade.save()
+            form.save_m2m()
+            messages.success(request, "Nova atividade agendada via Dashboard!")
+            return redirect('dashboard_analitico')
+    else:
+        form = AtividadeForm()
+
+    # 3. DADOS DE ANÁLISE (Mantidos)
+    quebras_por_maquina = Atividade.objects.filter(eh_preventiva=False).values('maquina__codigo').annotate(total=Count('id')).order_by('-total')[:5]
     labels_quebra = [item['maquina__codigo'] for item in quebras_por_maquina]
     data_quebra = [item['total'] for item in quebras_por_maquina]
-
-    # KPI B: Lista de Próximas Preventivas (Sidebar)
-    # Pegamos os planos ativos ordenados pela data mais próxima
     planos_futuros = PlanoPreventivo.objects.filter(ativo=True).order_by('proxima_data')[:10]
+    
+    # Lista de Técnicos para o Filtro do Gantt
+    tecnicos = User.objects.all()
 
     context = {
         'labels_quebra': labels_quebra,
         'data_quebra': data_quebra,
-        'planos_futuros': planos_futuros, # Nome exato que usaremos no HTML
+        'planos_futuros': planos_futuros,
+        'form': form,      # Enviamos o formulário
+        'tecnicos': tecnicos # Enviamos lista de técnicos para o filtro
     }
     
     return render(request, 'assets/dashboard_completo.html', context)
 
 @login_required
 def dados_gantt(request):
-    """ API que retorna JSON para o Frappe Gantt """
+    """ API Enriquecida para o Gantt """
     try:
         atividades_db = Atividade.objects.all()
         atividades = sequenciar_atividades(atividades_db)
         
         dados = []
+        agora = timezone.now()
+
         for act in atividades:
             progresso = 0
             if act.status == 'executando': progresso = 50
             elif act.status == 'finalizada': progresso = 100
             elif act.status == 'pausada': progresso = 25
 
-            tecnicos_nomes = ", ".join([t.first_name or t.username for t in act.colaboradores.all()])
+            # Lista de nomes e IDs para filtros
+            tecnicos_nomes = [t.first_name or t.username for t in act.colaboradores.all()]
+            tecnicos_ids = [str(t.id) for t in act.colaboradores.all()]
+            
+            nome_formatado = ", ".join(tecnicos_nomes)
             tempo_exibicao = f"{act.tempo_decimal:.2f}h"
 
-            # Personalização de classes CSS para o Gantt
+            # Lógica de Atraso Visual
             custom_class = f'gantt-status-{act.status}'
-            if getattr(act, 'eh_emergencial', False): # Caso tenha esse campo
+            
+            # Se não acabou e já passou da data fim calculada -> ATRASADO (Vermelho)
+            if act.status not in ['finalizada', 'cancelada'] and act.fim_calculado < agora:
+                custom_class = 'gantt-atrasado'
+            elif getattr(act, 'eh_emergencial', False):
                 custom_class = 'gantt-emergencial'
 
             dados.append({
                 'id': str(act.id),
-                'name': f"[{tecnicos_nomes}] {act.maquina.codigo}: {act.descricao[:20]}..",
+                'name': f"[{act.maquina.codigo}] {act.descricao[:25]}...",
+                'full_name': f"#{act.id} - {act.descricao}", # Nome completo para o modal
+                'description': act.descricao, # Descrição completa
                 'start': act.inicio_calculado.isoformat(),
                 'end': act.fim_calculado.isoformat(),
                 'progress': progresso,
-                'custom_class': custom_class
+                'custom_class': custom_class,
+                # Metadados para filtros e modal
+                'tech_ids': tecnicos_ids, 
+                'tech_names': ", ".join(tecnicos_nomes),
+                'status': act.status,
+                'maquina': act.maquina.codigo
             })
         
         return JsonResponse(dados, safe=False)
