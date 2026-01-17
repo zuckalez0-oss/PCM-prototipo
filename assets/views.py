@@ -217,12 +217,21 @@ def alterar_status(request, atividade_id, novo_status):
 def atribuir_tecnicos(request, atividade_id):
     if request.method == 'POST':
         atividade = get_object_or_404(Atividade, id=atividade_id)
-        tecnicos_ids = request.POST.getlist('tecnicos')
+        tecnicos_ids = request.POST.getlist('tecnicos') 
+        
         atividade.colaboradores.clear()
         if tecnicos_ids:
-            for t_id in tecnicos_ids: atividade.colaboradores.add(t_id)
-            messages.success(request, "Equipe atualizada!")
-        return redirect('lista_atividades')
+            for t_id in tecnicos_ids:
+                atividade.colaboradores.add(t_id)
+            messages.success(request, f"Equipe da OS #{atividade.id} atualizada com sucesso!")
+        else:
+            messages.warning(request, "Atenção: A OS ficou sem técnicos vinculados.")
+            
+        # CORREÇÃO: Redireciona para a página anterior (Dashboard ou Lista)
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            return redirect(referer)
+        return redirect('lista_atividades') # Fallback
 
 @login_required
 def abrir_chamado(request):
