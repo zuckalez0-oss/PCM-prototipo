@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inova Process | PCM Dashboard</title>
+    <title>LYPSYOS | PCM Dashboard</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
             --primary-bg: #f8fafc; /* Slate 50 */
             --sidebar-bg: #0f172a; /* Slate 900 */
             --card-bg: #ffffff;
-            --brand-color: #2563eb; /* Blue 600 */
+            --brand-color: #0ea5e9; /* Sky 500 - Cor tecnológica */
             --text-main: #334155; /* Slate 700 */
             --text-muted: #64748b; /* Slate 500 */
             --border-color: #e2e8f0;
@@ -30,24 +30,23 @@
 
         /* Navbar Moderna */
         .navbar { 
-            background-color: var(--card-bg); 
-            border-bottom: 1px solid var(--border-color);
+            background-color: var(--sidebar-bg); 
             padding: 1rem 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         
         .navbar-brand {
-            color: var(--sidebar-bg) !important;
+            color: #fff !important;
             font-weight: 800;
-            letter-spacing: -0.5px;
+            letter-spacing: 1px;
+            font-size: 1.25rem;
         }
 
         /* Botões Padronizados */
         .btn { font-weight: 500; border-radius: 6px; padding: 0.5rem 1rem; transition: all 0.2s; }
-        .btn-primary { background-color: var(--brand-color); border: none; }
-        .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-1px); }
-        .btn-outline-secondary { border-color: var(--border-color); color: var(--text-main); }
-        .btn-outline-secondary:hover { background-color: #f1f5f9; color: var(--sidebar-bg); }
-
+        .btn-primary { background-color: var(--brand-color); border: none; color: white; }
+        .btn-primary:hover { background-color: #0284c7; transform: translateY(-1px); }
+        
         /* Cards Modernos */
         .card { 
             border: 1px solid var(--border-color); 
@@ -62,14 +61,24 @@
             padding: 1.25rem;
         }
 
-        /* Badges de Status (Padrão Industrial) */
-        .status-badge { font-size: 0.75rem; padding: 4px 12px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .status-aberta { background-color: #e2e8f0; color: #475569; }
-        .status-executando { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; } /* Verde Fiori */
+        /* Badges de Status */
+        .status-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; }
+        .status-aberta { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .status-executando { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
         .status-pausada { background-color: #fef9c3; color: #a16207; border: 1px solid #fde047; }
         .status-finalizada { background-color: #e0f2fe; color: #0369a1; }
-        .status-cancelada { background-color: #fee2e2; color: #b91c1c; }
-        .status-recusado { background-color: #f1f5f9; color: #64748b; text-decoration: line-through; }
+        
+        /* Box de Justificativa de Pausa */
+        .pause-reason {
+            font-size: 0.75rem;
+            background-color: #fffbeb;
+            border-left: 3px solid #f59e0b;
+            color: #b45309;
+            padding: 4px 8px;
+            margin-top: 6px;
+            border-radius: 0 4px 4px 0;
+            max-width: 200px;
+        }
 
         /* Tabela Limpa */
         .table thead th {
@@ -82,12 +91,18 @@
             border-bottom: 2px solid var(--border-color);
         }
         .table td { vertical-align: middle; border-bottom: 1px solid var(--border-color); }
-        
-        /* Utilitários */
-        .avatar-circle {
-            width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; 
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; font-weight: bold; color: #475569; margin-right: -8px; border: 2px solid white;
+
+        /* Modal Técnico Bonito */
+        .tech-select-container select {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            background-color: #f8fafc;
+        }
+        .tech-select-container select:focus {
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
         }
 
         /* Animações */
@@ -100,16 +115,16 @@
     <nav class="navbar sticky-top mb-4">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-industry me-2 text-primary"></i>INOVA PROCESS <span class="fw-light text-muted">| PCM</span>
+                <i class="fas fa-microchip me-2"></i>LYPSYOS <span class="fw-light opacity-50" style="font-size: 0.8em;">| PCM System</span>
             </a>
             <div class="d-flex gap-2">
-                <a href="{% url 'abrir_chamado' %}" class="btn btn-primary btn-sm">
+                <a href="{% url 'abrir_chamado' %}" class="btn btn-primary btn-sm fw-bold">
                     <i class="fas fa-plus me-2"></i>Novo Chamado
                 </a>
-                <a href="{% url 'pagina_gantt' %}" class="btn btn-outline-secondary btn-sm">
+                <a href="{% url 'pagina_gantt' %}" class="btn btn-outline-light btn-sm text-white-50 border-secondary">
                     <i class="fas fa-chart-gantt me-2"></i>Cronograma
                 </a>
-                <a href="/admin" class="btn btn-outline-secondary btn-sm">
+                <a href="/admin" class="btn btn-dark btn-sm border-secondary">
                     <i class="fas fa-cog"></i>
                 </a>
                 <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm border-0">
@@ -132,40 +147,40 @@
 
         <div class="row mb-4 g-3">
             <div class="col-md-3">
-                <div class="card p-3 border-start border-4 border-primary h-100">
+                <div class="card p-3 border-start border-4 border-info h-100">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <span class="text-muted small fw-bold text-uppercase">OS em Execução</span>
-                            <h3 class="mb-0 fw-bold mt-1">{{ atividades|length }}</h3>
+                            <span class="text-muted small fw-bold text-uppercase">Tarefas Ativas</span>
+                            <h3 class="mb-0 fw-bold mt-1 text-dark">{{ atividades|length }}</h3>
                         </div>
-                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
-                            <i class="fas fa-cogs"></i>
+                        <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info">
+                            <i class="fas fa-clipboard-list fa-lg"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            </div>
+        </div>
 
         {% if chamados_pendentes %}
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold text-warning"><i class="fas fa-inbox me-2"></i>PENDENTE APROVAÇÃO (TRIAGEM)</h6>
-                <span class="badge bg-warning text-dark">{{ chamados_pendentes|length }}</span>
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-inbox me-2"></i>TRIAGEM DE CHAMADOS</h6>
+                <span class="badge bg-warning text-dark">{{ chamados_pendentes|length }} Pendentes</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
                             <th class="ps-4">Prioridade</th>
-                            <th>Máquina / Equipamento</th>
-                            <th>Problema Relatado</th>
-                            <th>Definir Técnico (OS)</th>
+                            <th>Máquina</th>
+                            <th>Descrição do Problema</th>
+                            <th>Atribuir Técnico</th>
                             <th class="text-end pe-4">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for chamado in chamados_pendentes %}
-                        <tr>
+                        <tr class="bg-white">
                             <td class="ps-4">
                                 {% if chamado.prioridade_indicada == 'alta' %}
                                     <span class="badge bg-danger">ALTA</span>
@@ -176,49 +191,46 @@
                             <td>
                                 <div class="fw-bold">{{ chamado.maquina.codigo }}</div>
                                 {% if chamado.maquina_parada %}
-                                    <small class="text-danger fw-bold"><i class="fas fa-stop-circle me-1"></i>PARADA</small>
+                                    <span class="badge bg-danger" style="font-size: 0.6rem;">MÁQUINA PARADA</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="text-dark">{{ chamado.descricao_problema }}</div>
-                                <small class="text-muted">Req: {{ chamado.requisitante.username }} • {{ chamado.data_abertura|date:"H:i" }}</small>
+                                <small class="text-muted">Aberto por: {{ chamado.requisitante.username }} às {{ chamado.data_abertura|date:"H:i" }}</small>
                             </td>
                             <td>
-                                <form action="{% url 'aprovar_chamado' chamado.id %}" method="post" class="d-flex gap-2 align-items-center">
+                                <form action="{% url 'aprovar_chamado' chamado.id %}" method="post" class="d-flex gap-2">
                                     {% csrf_token %}
-                                    <select name="tecnico" class="form-select form-select-sm" style="max-width: 200px;" required>
-                                        <option value="" selected disabled>Selecionar Técnico...</option>
+                                    <select name="tecnico" class="form-select form-select-sm" required style="width: 180px;">
+                                        <option value="" selected disabled>Escolher Técnico...</option>
                                         {% for t in tecnicos %}
                                             <option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-sm btn-success">
-                                        <i class="fas fa-check"></i>
-                                    </button>
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold">OK</button>
                                 </form>
                             </td>
                             <td class="text-end pe-4">
                                 <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalRecusa{{ chamado.id }}">
-                                    <i class="fas fa-ban me-1"></i> Rejeitar
+                                    <i class="fas fa-times-circle"></i>
                                 </button>
                             </td>
                         </tr>
 
                         <div class="modal fade" id="modalRecusa{{ chamado.id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
-                                <form action="{% url 'recusar_chamado' chamado.id %}" method="post" class="modal-content">
+                                <form action="{% url 'recusar_chamado' chamado.id %}" method="post" class="modal-content border-0 shadow">
                                     {% csrf_token %}
                                     <div class="modal-header bg-danger text-white">
                                         <h6 class="modal-title">Rejeitar Chamado #{{ chamado.id }}</h6>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <label class="form-label small fw-bold">Motivo da Rejeição</label>
-                                        <textarea name="motivo" class="form-control" rows="3" required placeholder="Ex: Informações insuficientes, duplicado..."></textarea>
+                                        <label class="form-label fw-bold">Motivo da Rejeição</label>
+                                        <textarea name="motivo" class="form-control" rows="3" required placeholder="Digite o motivo..."></textarea>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-danger">Confirmar Rejeição</button>
+                                        <button type="submit" class="btn btn-danger w-100">Confirmar</button>
                                     </div>
                                 </form>
                             </div>
@@ -238,7 +250,7 @@
                     </div>
                     <div class="col-md-6 text-end">
                         <div class="d-inline-flex align-items-center gap-2">
-                            <span class="small text-muted fw-bold">FILTRAR POR TÉCNICO:</span>
+                            <span class="small text-muted fw-bold">FILTRO:</span>
                             <select id="filtroTecnico" class="form-select form-select-sm" style="width: 200px;" onchange="filtrarTabela()">
                                 <option value="todos">Todos os Técnicos</option>
                                 <option value="sem_tecnico">⚠️ Sem Técnico</option>
@@ -251,40 +263,43 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="tabelaOS">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th class="ps-4">OS ID</th>
                             <th>Atividade</th>
-                            <th>Equipe (Técnicos)</th>
-                            <th>Status</th>
+                            <th>Equipe</th>
+                            <th>Status & Justificativa</th>
                             <th>Cronômetro</th>
                             <th class="text-center">Controles</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for atividade in atividades %}
-                        <tr class="linha-tarefa" data-tech-ids="{% for colab in atividade.colaboradores.all %}{{ colab.id }},{% endfor %}{% if not atividade.colaboradores.all %}sem_tecnico{% endif %}">
+                        <tr class="linha-tarefa bg-white" data-tech-ids="{% for colab in atividade.colaboradores.all %}{{ colab.id }},{% endfor %}{% if not atividade.colaboradores.all %}sem_tecnico{% endif %}">
                             <td class="ps-4 fw-bold text-muted">#{{ atividade.id }}</td>
                             <td>
-                                <div class="fw-bold text-dark">{{ atividade.maquina.codigo }} - {{ atividade.descricao }}</div>
-                                <div class="small text-muted">
-                                    <i class="far fa-clock me-1"></i>Estimado: {{ atividade.duracao_formatada }}
-                                    {% if atividade.eh_emergencial %}
-                                        <span class="badge bg-danger ms-2">EMERGÊNCIA</span>
-                                    {% endif %}
-                                </div>
+                                <div class="fw-bold text-dark">{{ atividade.maquina.codigo }}</div>
+                                <div class="small text-muted">{{ atividade.descricao }}</div>
                             </td>
                             <td>
-                                <div class="d-flex align-items-center cursor-pointer" data-bs-toggle="modal" data-bs-target="#modalTecnicos{{ atividade.id }}">
-                                    {% for colab in atividade.colaboradores.all %}
-                                        <div class="avatar-circle" title="{{ colab.first_name }}">
-                                            {{ colab.first_name|first|default:colab.username|first|upper }}
-                                        </div>
-                                    {% empty %}
-                                        <span class="badge bg-danger-subtle text-danger border border-danger small">SEM TÉCNICO</span>
+                                <button class="btn btn-light border btn-sm d-flex align-items-center gap-2" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalTecnicos{{ atividade.id }}"
+                                        title="Clique para editar equipe">
+                                    <i class="fas fa-users text-primary"></i>
+                                    <span class="small fw-bold">
+                                        {% if atividade.colaboradores.all %}
+                                            {{ atividade.colaboradores.count }} Téc.
+                                        {% else %}
+                                            <span class="text-danger">Definir</span>
+                                        {% endif %}
+                                    </span>
+                                </button>
+                                <div class="small text-muted mt-1">
+                                    {% for c in atividade.colaboradores.all %}
+                                        {{ c.first_name|default:c.username }}{% if not forloop.last %}, {% endif %}
                                     {% endfor %}
-                                    <i class="fas fa-pen fa-xs ms-2 text-muted opacity-50"></i>
                                 </div>
                             </td>
                             <td>
@@ -292,18 +307,24 @@
                                     <span id="status-badge-{{ atividade.id }}" class="status-badge status-{{ atividade.status }}">
                                         {{ atividade.get_status_display }}
                                     </span>
+                                    
+                                    {% if atividade.status == 'pausada' and atividade.motivo_pausa %}
+                                        <div class="pause-reason fade-in">
+                                            <i class="fas fa-exclamation-circle me-1"></i> {{ atividade.motivo_pausa }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td>
                                 {% if atividade.status == 'executando' %}
-                                    <span class="text-success fw-bold small animate-pulse">Executando...</span>
+                                    <span class="text-success fw-bold small">Executando...</span>
                                 {% else %}
                                     <span class="text-muted small">--:--</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-light border" 
+                                <div class="btn-group shadow-sm">
+                                    <button class="btn btn-sm btn-white border" 
                                             hx-post="{% url 'alterar_status' atividade.id 'executando' %}" 
                                             hx-target="#status-badge-{{ atividade.id }}"
                                             onclick="setTimeout(()=>location.reload(), 500)"
@@ -311,14 +332,14 @@
                                         <i class="fas fa-play text-success"></i>
                                     </button>
                                     
-                                    <button class="btn btn-sm btn-light border" 
+                                    <button class="btn btn-sm btn-white border" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#modalPausa{{ atividade.id }}"
                                             title="Pausar">
                                         <i class="fas fa-pause text-warning"></i>
                                     </button>
                                     
-                                    <button class="btn btn-sm btn-light border" 
+                                    <button class="btn btn-sm btn-white border" 
                                             hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" 
                                             hx-target="#status-badge-{{ atividade.id }}"
                                             onclick="setTimeout(()=>location.reload(), 500)"
@@ -328,17 +349,50 @@
                                 </div>
                             </td>
                         </tr>
-                        
-                        <div class="modal fade" id="modalPausa{{ atividade.id }}" tabindex="-1">
+
+                        <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-warning-subtle">
-                                        <h6 class="modal-title fw-bold">Pausar Atividade #{{ atividade.id }}</h6>
+                                <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content border-0 shadow-lg">
+                                    {% csrf_token %}
+                                    <div class="modal-header border-bottom-0 pb-0">
+                                        <h5 class="modal-title fw-bold">Editar Equipe</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <div class="modal-body">
-                                        <label class="form-label small text-muted">Motivo da Pausa</label>
-                                        <textarea id="justificativa{{ atividade.id }}" name="justificativa" class="form-control" required></textarea>
+                                    <div class="modal-body pt-2">
+                                        <p class="text-muted small mb-3">Selecione os técnicos responsáveis pela OS <strong>#{{ atividade.id }}</strong>.</p>
+                                        
+                                        <div class="tech-select-container">
+                                            <label class="form-label small fw-bold text-uppercase text-muted">Técnicos Disponíveis</label>
+                                            <select name="tecnicos" class="form-select w-100" multiple size="6">
+                                                {% for t in tecnicos %}
+                                                    <option value="{{ t.id }}" class="py-2 px-2" {% if t in atividade.colaboradores.all %}selected{% endif %}>
+                                                        👤 {{ t.first_name|default:t.username }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text text-primary small mt-2">
+                                                <i class="fas fa-info-circle"></i> Segure a tecla <strong>CTRL</strong> para selecionar mais de um.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-top-0 pt-0">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary px-4 fw-bold">Salvar Equipe</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="modalPausa{{ atividade.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header bg-warning text-dark">
+                                        <h6 class="modal-title fw-bold">Pausar Atividade</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <label class="form-label fw-bold small">Qual o motivo da pausa?</label>
+                                        <textarea id="justificativa{{ atividade.id }}" name="justificativa" class="form-control" rows="3" required placeholder="Ex: Aguardando peças..."></textarea>
                                         <button class="btn btn-warning w-100 mt-3 fw-bold"
                                                 hx-post="{% url 'alterar_status' atividade.id 'pausada' %}"
                                                 hx-include="#justificativa{{ atividade.id }}"
@@ -350,32 +404,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content">
-                                    {% csrf_token %}
-                                    <div class="modal-header">
-                                        <h6 class="modal-title">Editar Equipe</h6>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <select name="tecnicos" class="form-select" multiple style="height: 150px;">
-                                            {% for t in tecnicos %}
-                                                <option value="{{ t.id }}" {% if t in atividade.colaboradores.all %}selected{% endif %}>
-                                                    {{ t.first_name|default:t.username }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                        <small class="text-muted d-block mt-2">Segure CTRL para selecionar múltiplos.</small>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="submit" class="btn btn-primary w-100">Salvar Alterações</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-
                         {% endfor %}
                     </tbody>
                 </table>
@@ -383,22 +411,35 @@
         </div>
 
         <div class="mt-5 text-center">
-            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#historicoCollapse">
+            <button class="btn btn-light text-muted border btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#historicoCollapse">
                 <i class="fas fa-history me-2"></i>Ver Histórico de Concluídas
             </button>
         </div>
         <div class="collapse mt-3 mb-5" id="historicoCollapse">
-            <div class="card card-body bg-light border-0">
+            <div class="card card-body border-0 shadow-sm">
                 <table class="table table-sm text-muted mb-0">
                     <thead>
-                        <tr><th>Máquina</th><th>Descrição</th><th>Técnicos</th><th>Data Fim</th></tr>
+                        <tr>
+                            <th>Máquina</th>
+                            <th>Descrição</th>
+                            <th>Técnicos</th>
+                            <th>Duração Total</th>
+                            <th>Concluído em</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {% for atividade in atividades_concluidas %}
                         <tr>
-                            <td>{{ atividade.maquina.codigo }}</td>
+                            <td class="fw-bold">{{ atividade.maquina.codigo }}</td>
                             <td>{{ atividade.descricao }}</td>
-                            <td>{{ atividade.colaboradores.all|join:", " }}</td>
+                            <td>
+                                {% for c in atividade.colaboradores.all %}
+                                    {{ c.first_name|default:c.username }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td class="text-primary fw-bold font-monospace">
+                                <i class="far fa-clock me-1"></i>{{ atividade.tempo_decimal|floatformat:2 }}h
+                            </td>
                             <td>{{ atividade.fim_calculado|date:"d/m/Y H:i" }}</td>
                         </tr>
                         {% endfor %}
@@ -409,8 +450,8 @@
     </div>
 
     <div class="modal fade" id="modalAtividade" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h6 class="modal-title fw-bold">Nova Ordem de Serviço</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -428,9 +469,9 @@
                                 {{ form.data_planejada }}
                             </div>
                             <div class="col-12">
-                                <div class="form-check form-switch bg-light p-3 rounded">
+                                <div class="form-check form-switch bg-light p-3 rounded border">
                                     {{ form.eh_preventiva }}
-                                    <label class="form-check-label ms-2" for="checkPreventiva">É Manutenção Preventiva?</label>
+                                    <label class="form-check-label ms-2 fw-bold" for="checkPreventiva">É Manutenção Preventiva?</label>
                                 </div>
                             </div>
                             <div id="sectionPreventiva" class="col-12 d-none">
@@ -438,21 +479,21 @@
                                 {{ form.procedimento_base }}
                             </div>
                             <div id="sectionDescricao" class="col-12">
-                                <label class="form-label">Descrição da Atividade</label>
+                                <label class="form-label small fw-bold">Descrição da Atividade</label>
                                 {{ form.descricao }}
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Técnicos Responsáveis</label>
+                                <label class="form-label small fw-bold">Técnicos Responsáveis</label>
                                 {{ form.colaboradores }}
                             </div>
                             <div id="sectionTempo" class="col-12">
                                 <div class="row">
                                     <div class="col-6">
-                                        <label class="form-label">Tempo Estimado</label>
+                                        <label class="form-label small fw-bold">Tempo Estimado</label>
                                         {{ form.tempo_valor }}
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label">Unidade</label>
+                                        <label class="form-label small fw-bold">Unidade</label>
                                         {{ form.tempo_unidade }}
                                     </div>
                                 </div>
@@ -460,7 +501,7 @@
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
-                        <button type="submit" class="btn btn-primary px-4">Gerar OS</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Gerar OS</button>
                     </div>
                 </form>
             </div>
@@ -469,14 +510,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Lógica do Filtro Dinâmico
         function filtrarTabela() {
             const filtro = document.getElementById('filtroTecnico').value;
             const linhas = document.querySelectorAll('.linha-tarefa');
-
             linhas.forEach(linha => {
                 const techsDaLinha = linha.getAttribute('data-tech-ids');
-                
                 if (filtro === 'todos') {
                     linha.style.display = '';
                 } else if (techsDaLinha.includes(filtro)) {
@@ -487,13 +525,11 @@
             });
         }
 
-        // Lógica do Checkbox Preventiva
         document.addEventListener('DOMContentLoaded', function() {
             const check = document.getElementById('id_eh_preventiva') || document.querySelector('input[name="eh_preventiva"]');
             const sectionPrev = document.getElementById('sectionPreventiva');
             const sectionDesc = document.getElementById('sectionDescricao');
             const sectionTempo = document.getElementById('sectionTempo');
-
             if(check) {
                 check.addEventListener('change', function() {
                     if(this.checked) {
