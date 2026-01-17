@@ -39,8 +39,8 @@ def verificar_e_gerar_preventivas():
 @login_required
 def dados_gantt(request):
     try:
-        # select_related traz o nome da máquina junto para não travar
-        atividades_db = Atividade.objects.select_related('maquina').all()
+        # Trazemos Logs e Usuários para evitar consultas repetidas
+        atividades_db = Atividade.objects.select_related('maquina').prefetch_related('colaboradores', 'logs__usuario').all()
         atividades = sequenciar_atividades(atividades_db)
         
         dados = []
@@ -55,10 +55,16 @@ def dados_gantt(request):
             tecnicos_nomes = [t.first_name or t.username for t in act.colaboradores.all()]
             tecnicos_ids = [str(t.id) for t in act.colaboradores.all()]
             
-            # --- CORREÇÃO AQUI: Código + Nome da Máquina ---
+            # --- NOVO: Preparar Histórico para o JSON ---
+            logs_list = []
+            for log in act.logs.all().order_by('-data_registro'):
+                logs_list.append({
+                    'data': log.data_registro.strftime('%d/%m/%Y %H:%M'),
+                    'usuario': log.usuario.username,
+                    'descricao': log.descricao
+                })
+
             nome_maquina_full = f"[{act.maquina.codigo}] {act.maquina.nome}"
-            
-            # Label da barra (Resumido)
             label_barra = f"{nome_maquina_full}: {act.descricao[:20]}.."
 
             custom_class = f'gantt-status-{act.status}'
@@ -69,7 +75,7 @@ def dados_gantt(request):
 
             dados.append({
                 'id': str(act.id),
-                'name': label_barra, # O que aparece na barra
+                'name': label_barra,
                 'full_name': f"#{act.id} - {act.descricao}",
                 'description': act.descricao,
                 'start': act.inicio_calculado.isoformat(),
@@ -79,7 +85,9 @@ def dados_gantt(request):
                 'tech_ids': tecnicos_ids, 
                 'tech_names': ", ".join(tecnicos_nomes),
                 'status': act.status,
-                'maquina': nome_maquina_full # Nome completo para o modal
+                'maquina': nome_maquina_full,
+                'logs': logs_list, # Enviando o histórico
+                'motivo_pausa': act.motivo_pausa or "" # Enviando motivo da pausa
             })
         
         return JsonResponse(dados, safe=False)
