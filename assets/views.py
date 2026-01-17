@@ -5,14 +5,16 @@ from datetime import timedelta     # Adicionado: timedelta para cálculos de tem
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.contrib import messages 
-# Importe o sistema de mensagens
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 
-# Importe o novo modelo Chamado aqui
+from .models import Atividade, AtividadeLog # Import log
+
+
 from .models import Atividade, Maquina, ProcedimentoPreventivo, Chamado 
 
-# Importe o formulário e a função de sequenciamento
+
 from .forms import AtividadeForm
 from .utils import sequenciar_atividades
 
@@ -99,50 +101,62 @@ def cancelar_atividade(request, atividade_id):
 @login_required
 def alterar_status(request, atividade_id, novo_status):
     atividade = get_object_or_404(Atividade, id=atividade_id)
-    
-    # Validação de Técnicos (ManyToManyField)
-    if novo_status in ['executando', 'finalizada'] and not atividade.colaboradores.exists():
-        return HttpResponse(
-            f'<script>alert("AÇÃO INVÁLIDA: Atribua ao menos um técnico!");</script>'
-            f'<span id="status-badge-{atividade.id}" class="status-badge status-{atividade.status}">{atividade.get_status_display()}</span>'
-        )
+    justificativa = request.POST.get('justificativa', '') # Pega o motivo do modal
+    usuario = request.user
 
-    agora = timezone.now()
-
-    if novo_status == 'pausada':
-        motivo = request.POST.get(f'justificativa{atividade_id}')
-        atividade.motivo_pausa = motivo
-    elif novo_status == 'executando':
-        atividade.motivo_pausa = "" # Limpa o motivo ao retomar
-        atividade.ultima_interacao = agora
-
-    # Lógica de tempo acumulado
-    if atividade.status == 'executando' and novo_status in ['pausada', 'finalizada']:
-        if atividade.ultima_interacao:
-            atividade.tempo_total_gasto += (agora - atividade.ultima_interacao)
-
+    # 1. Atualiza Status e Motivo no Objeto Principal
     atividade.status = novo_status
-    atividade.save()
+    if novo_status == 'pausada':
+        atividade.motivo_pausa = justificativa
+    elif novo_status == 'executando':
+        atividade.motivo_pausa = None # Limpa motivo se voltar a rodar
+        atividade.ultima_interacao = timezone.now()
     
-    # Retorna o badge e um comando para recarregar a página e mostrar o motivo abaixo do badge
-    return HttpResponse(
-        f'<span id="status-badge-{atividade.id}" class="status-badge status-{atividade.status}">'
-        f'{atividade.get_status_display()}</span>'
-        f'<script>setTimeout(()=>location.reload(), 300)</script>'
+    atividade.save()
+
+    # 2. Cria o Log para o Histórico Detalhado
+    descricao_log = f"Alterado para {novo_status.upper()}"
+    if justificativa:
+        descricao_log += f": {justificativa}"
+    
+    AtividadeLog.objects.create(
+        atividade=atividade,
+        usuario=usuario,
+        status_novo=novo_status,
+        descricao=descricao_log
     )
 
+    # 3. Retorna o HTML atualizado (COM A JUSTIFICATIVA)
+    # Importante: Retornamos o badge E a div de justificativa
+    cor_status = {
+        'aberta': 'status-aberta', 'executando': 'status-executando',
+        'pausada': 'status-pausada', 'finalizada': 'status-finalizada'
+    }.get(novo_status, '')
+
+    html_retorno = f'<span class="status-badge {cor_status}">{atividade.get_status_display()}</span>'
+    
+    if novo_status == 'pausada' and justificativa:
+        html_retorno += f'<div class="pause-reason fade-in"><i class="fas fa-exclamation-circle me-1"></i>{justificativa}</div>'
+    
+    return HttpResponse(html_retorno)
 @login_required
 def atribuir_tecnicos(request, atividade_id):
     if request.method == 'POST':
         atividade = get_object_or_404(Atividade, id=atividade_id)
-        # Pega a lista de IDs de técnicos enviados pelo formulário
-        tecnicos_ids = request.POST.getlist('tecnicos')
+        # Pega a lista de IDs enviados pelo select multiple
+        tecnicos_ids = request.POST.getlist('tecnicos') 
         
-        # O método .set() remove os antigos e adiciona os novos automaticamente
-        atividade.colaboradores.set(tecnicos_ids)
-        
-        messages.success(request, f"Equipe da OS #{atividade.id} atualizada!")
-    return redirect('lista_atividades')
+        # Limpa os atuais e adiciona os novos
+        atividade.colaboradores.clear()
+        if tecnicos_ids:
+            for t_id in tecnicos_ids:
+                atividade.colaboradores.add(t_id)
+            
+            messages.success(request, f"Equipe da OS #{atividade.id} atualizada com sucesso!")
+        else:
+            messages.warning(request, "Atenção: A OS ficou sem técnicos vinculados.")
+            
+        return redirect('lista_atividades')
 
 @login_required
 def pagina_gantt(request):
