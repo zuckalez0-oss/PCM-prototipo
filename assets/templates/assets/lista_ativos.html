@@ -3,177 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LYPSYOS | PCM Dashboard</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>LYPSYOS | PCM Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
     <style>
-        :root {
-            --primary-bg: #f8fafc;
-            --sidebar-bg: #0f172a;
-            --card-bg: #ffffff;
-            --brand-color: #0ea5e9;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-        }
-
-        body { font-family: 'Inter', sans-serif; background-color: var(--primary-bg); color: var(--text-main); }
-
-        /* Navbar */
-        .navbar { background-color: var(--sidebar-bg); padding: 1rem 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .navbar-brand { color: #fff !important; font-weight: 800; letter-spacing: 1px; font-size: 1.25rem; }
-
-        /* Cards e Botões */
-        .btn { font-weight: 500; border-radius: 6px; padding: 0.5rem 1rem; transition: all 0.2s; }
-        .btn-primary { background-color: var(--brand-color); border: none; color: white; }
-        .btn-primary:hover { background-color: #0284c7; transform: translateY(-1px); }
+        :root { --sidebar-width: 300px; --primary: #0f172a; --accent: #0ea5e9; }
+        body { background: #f8fafc; overflow-x: hidden; font-family: 'Inter', sans-serif; }
         
-        .card { border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: var(--card-bg); margin-bottom: 24px; }
-        .card-header { background: transparent; border-bottom: 1px solid var(--border-color); padding: 1.25rem; }
-
-        /* Status Badges */
-        .status-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; }
-        .status-aberta { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .status-executando { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
-        .status-pausada { background-color: #fef9c3; color: #a16207; border: 1px solid #fde047; }
-        .status-finalizada { background-color: #e0f2fe; color: #0369a1; }
+        /* Layout igual ao Dashboard */
+        .dashboard-wrapper { display: flex; height: 100vh; }
+        .analytics-sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #e2e8f0; padding: 24px; overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 2rem; }
+        .main-content { flex-grow: 1; padding: 24px; overflow-y: auto; background: #f1f5f9; }
         
-        /* Box de Justificativa */
-        .pause-reason {
-            font-size: 0.75rem; background-color: #fffbeb; border-left: 3px solid #f59e0b;
-            color: #b45309; padding: 4px 8px; margin-top: 6px; border-radius: 0 4px 4px 0; max-width: 100%; display: block;
-        }
-
-        /* Tabela */
-        .table thead th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; background-color: #f8fafc; border-bottom: 2px solid var(--border-color); }
-        .table td { vertical-align: middle; border-bottom: 1px solid var(--border-color); }
-
-        /* Select Técnico Customizado */
-        .tech-select-container select {
-            border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 0.9rem; background-color: #f8fafc; width: 100%;
-        }
-        .tech-select-container select:focus { border-color: var(--brand-color); outline: none; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
-
-        /* Timeline (Histórico) */
-        .timeline { border-left: 2px solid #e2e8f0; padding-left: 20px; margin-left: 10px; list-style: none; margin-top: 20px; }
-        .timeline-item { position: relative; margin-bottom: 20px; }
-        .timeline-item::before { 
-            content: ''; position: absolute; left: -26px; top: 5px; 
-            width: 10px; height: 10px; border-radius: 50%; background: var(--brand-color); border: 2px solid white; box-shadow: 0 0 0 2px #e2e8f0;
-        }
-        .timeline-date { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
-        .timeline-content { font-size: 0.9rem; color: var(--text-main); background: #f8fafc; padding: 8px 12px; border-radius: 6px; margin-top: 4px; display: inline-block;}
-
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Cards */
+        .card { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: #fff; margin-bottom: 24px; }
+        .status-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
+        .status-executando { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .status-pausada { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+        .status-finalizada { background: #e0f2fe; color: #0369a1; }
+        .status-aberta { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        
+        .navbar-glass { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     </style>
 </head>
 <body>
 
-    <nav class="navbar sticky-top mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-microchip me-2"></i>LYPSYOS <span class="fw-light opacity-50" style="font-size: 0.8em;">| PCM System</span>
+<div class="dashboard-wrapper">
+    <aside class="analytics-sidebar">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="bg-primary text-white rounded p-2"><i class="fas fa-industry"></i></div>
+            <div><h6 class="fw-bold text-dark mb-0">LYPSYOS</h6><small class="text-muted">PCM Manager</small></div>
+        </div>
+        
+        <div class="d-grid gap-2">
+            <a href="{% url 'dashboard_analitico' %}" class="btn btn-outline-primary fw-bold text-start">
+                <i class="fas fa-chart-pie me-2"></i>Dashboard / Gantt
             </a>
-            <div class="d-flex gap-2">
-                <a href="{% url 'abrir_chamado' %}" class="btn btn-primary btn-sm fw-bold"><i class="fas fa-plus me-2"></i>Novo Chamado</a>
-                <a href="{% url 'dashboard_analitico' %}" class="btn btn-outline-light btn-sm text-white-50 border-secondary">
-                <i class="fas fa-chart-gantt me-2"></i>Cronograma
-                </a>
-                <a href="/admin" class="btn btn-dark btn-sm border-secondary"><i class="fas fa-cog"></i></a>
-                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm border-0"><i class="fas fa-sign-out-alt"></i></a>
+            <button class="btn btn-primary fw-bold text-start" disabled>
+                <i class="fas fa-list me-2"></i>Lista de Atividades
+            </button>
+            <a href="{% url 'abrir_chamado' %}" class="btn btn-outline-dark fw-bold text-start">
+                <i class="fas fa-plus me-2"></i>Abrir Chamado
+            </a>
+        </div>
+
+        <hr>
+        
+        <div>
+            <h6 class="text-muted text-uppercase small fw-bold mb-3">Resumo Atual</h6>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Pendentes</span> <span class="fw-bold">{{ atividades|length }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Triagem</span> <span class="fw-bold text-warning">{{ chamados_pendentes|length }}</span>
             </div>
         </div>
-    </nav>
+        
+        <div class="mt-auto">
+             <a href="{% url 'logout' %}" class="btn btn-light w-100 text-danger border"><i class="fas fa-sign-out-alt me-2"></i>Sair</a>
+        </div>
+    </aside>
 
-    <div class="container-fluid px-4 fade-in">
+    <main class="main-content">
         
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>{{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 bg-white" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>{{ message }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
         {% endif %}
 
-        <div class="row mb-4 g-3">
-            <div class="col-md-3">
-                <div class="card p-3 border-start border-4 border-info h-100">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-muted small fw-bold text-uppercase">Tarefas Ativas</span>
-                            <h3 class="mb-0 fw-bold mt-1 text-dark">{{ atividades|length }}</h3>
-                        </div>
-                        <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info">
-                            <i class="fas fa-clipboard-list fa-lg"></i>
-                        </div>
-                    </div>
-                </div>
+        <nav class="navbar-glass mb-4 d-flex justify-content-between align-items-center">
+            <div><h6 class="mb-0 fw-bold text-dark">Fila de Trabalho</h6><small class="text-muted">Operação em Tempo Real</small></div>
+            <div class="d-flex gap-2">
+                <span class="small fw-bold text-muted align-self-center">FILTRO:</span>
+                <select id="filtroTecnico" class="form-select form-select-sm" style="width: 150px;" onchange="filtrarTabela()">
+                    <option value="todos">Todos</option>
+                    {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
+                </select>
             </div>
-        </div>
+        </nav>
 
         {% if chamados_pendentes %}
         <div class="card mb-4 border-warning">
             <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-inbox me-2"></i>TRIAGEM (PENDENTES)</h6>
-                <span class="badge bg-warning text-dark">{{ chamados_pendentes|length }} Pendentes</span>
+                <span class="badge bg-warning text-dark">{{ chamados_pendentes|length }}</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
-                    <thead><tr><th class="ps-4">Prioridade</th><th>Máquina</th><th>Problema</th><th>Atribuir</th><th class="text-end pe-4">Ações</th></tr></thead>
+                    <thead><tr><th class="ps-4">Prioridade</th><th>Máquina</th><th>Problema</th><th>Ação</th></tr></thead>
                     <tbody>
                         {% for chamado in chamados_pendentes %}
-                        <tr class="bg-white">
-                            <td class="ps-4">
-                                {% if chamado.prioridade_indicada == 'alta' %}<span class="badge bg-danger">ALTA</span>{% else %}<span class="badge bg-secondary">NORMAL</span>{% endif %}
-                            </td>
-                            <td>
-                                <div class="fw-bold">{{ chamado.maquina.codigo }}</div>
-                                {% if chamado.maquina_parada %}<span class="badge bg-danger" style="font-size: 0.6rem;">PARADA</span>{% endif %}
-                            </td>
-                            <td>
-                                <div class="text-dark">{{ chamado.descricao_problema }}</div>
-                                <small class="text-muted">Req: {{ chamado.requisitante.username }}</small>
-                            </td>
+                        <tr>
+                            <td class="ps-4">{% if chamado.prioridade_indicada == 'alta' %}<span class="badge bg-danger">ALTA</span>{% else %}<span class="badge bg-secondary">NORMAL</span>{% endif %}</td>
+                            <td><div class="fw-bold">{{ chamado.maquina.codigo }}</div><small>{{ chamado.maquina.nome }}</small></td>
+                            <td>{{ chamado.descricao_problema }}</td>
                             <td>
                                 <form action="{% url 'aprovar_chamado' chamado.id %}" method="post" class="d-flex gap-2">
                                     {% csrf_token %}
-                                    <select name="tecnico" class="form-select form-select-sm" required style="width: 150px;">
-                                        <option value="" selected disabled>Técnico...</option>
+                                    <select name="tecnico" class="form-select form-select-sm" required style="width: 120px;">
+                                        <option value="" disabled selected>Técnico...</option>
                                         {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-success btn-sm fw-bold">OK</button>
+                                    <button class="btn btn-success btn-sm fw-bold">OK</button>
                                 </form>
-                            </td>
-                            <td class="text-end pe-4">
-                                <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalRecusa{{ chamado.id }}">
-                                    <i class="fas fa-times-circle"></i>
-                                </button>
-
-                                <div class="modal fade text-start" id="modalRecusa{{ chamado.id }}" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <form action="{% url 'recusar_chamado' chamado.id %}" method="post" class="modal-content border-0 shadow">
-                                            {% csrf_token %}
-                                            <div class="modal-header bg-danger text-white">
-                                                <h6 class="modal-title">Rejeitar Chamado #{{ chamado.id }}</h6>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <label class="form-label fw-bold">Motivo da Rejeição</label>
-                                                <textarea name="motivo" class="form-control" rows="3" required placeholder="Ex: Informação insuficiente..."></textarea>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="submit" class="btn btn-danger w-100">Confirmar Rejeição</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -184,171 +120,48 @@
         {% endif %}
 
         <div class="card">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-tasks me-2"></i>FILA DE OPERAÇÃO (OS)</h6>
-                <div class="d-flex align-items-center gap-2">
-                    <small class="fw-bold text-muted">FILTRO:</small>
-                    <select id="filtroTecnico" class="form-select form-select-sm w-auto" onchange="filtrarTabela()">
-                        <option value="todos">Todos</option>
-                        {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
-                    </select>
-                </div>
-            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead><tr><th class="ps-4">OS ID</th><th>Atividade</th><th>Equipe</th><th>Status & Justificativa</th><th>Cronômetro</th><th class="text-center">Controles</th></tr></thead>
+                    <thead class="bg-light"><tr><th class="ps-4">OS</th><th>Máquina / Atividade</th><th>Equipe</th><th>Status</th><th>Ações</th></tr></thead>
                     <tbody>
                         {% for atividade in atividades %}
                         <tr class="linha-tarefa" data-tech-ids="{% for c in atividade.colaboradores.all %}{{ c.id }},{% endfor %}">
                             <td class="ps-4 fw-bold text-muted">#{{ atividade.id }}</td>
                             <td>
-                                <div class="fw-bold">{{ atividade.maquina.codigo }}</div>
+                                <div class="fw-bold text-dark">[{{ atividade.maquina.codigo }}] {{ atividade.maquina.nome }}</div>
                                 <div class="small text-muted">{{ atividade.descricao }}</div>
-                                <button class="btn btn-link btn-sm p-0 text-decoration-none mt-1" data-bs-toggle="modal" data-bs-target="#modalDetalhes{{ atividade.id }}">
-                                    <i class="fas fa-info-circle text-info"></i> <span class="small fw-bold">Ver Histórico</span>
-                                </button>
                             </td>
                             <td>
-                                <button class="btn btn-light border btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTecnicos{{ atividade.id }}">
-                                    <i class="fas fa-users text-primary"></i>
-                                    <span class="small fw-bold">{% if atividade.colaboradores.all %}{{ atividade.colaboradores.count }} Téc.{% else %}<span class="text-danger">Definir</span>{% endif %}</span>
-                                </button>
-                                <div class="small text-muted mt-1">
-                                    {% for c in atividade.colaboradores.all %}{{ c.first_name|default:c.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                                </div>
+                                <span class="small text-muted">
+                                    {% for c in atividade.colaboradores.all %}{{ c.first_name|default:c.username }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-danger">Sem técnico</span>{% endfor %}
+                                </span>
                             </td>
                             <td>
                                 <div id="status-container-{{ atividade.id }}">
-                                    <span id="status-badge-{{ atividade.id }}" class="status-badge status-{{ atividade.status }}">{{ atividade.get_status_display }}</span>
-                                    {% if atividade.status == 'pausada' and atividade.motivo_pausa %}
-                                        <div class="pause-reason fade-in"><i class="fas fa-exclamation-circle me-1"></i> {{ atividade.motivo_pausa }}</div>
-                                    {% endif %}
+                                    <span class="status-badge status-{{ atividade.status }}">{{ atividade.get_status_display }}</span>
                                 </div>
                             </td>
                             <td>
-                                {% if atividade.status == 'executando' %}<span class="text-success fw-bold small spinner-grow spinner-grow-sm me-1"></span>Executando...{% else %}<span class="text-muted small">--:--</span>{% endif %}
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group shadow-sm">
-                                    <button class="btn btn-sm btn-white border" hx-post="{% url 'alterar_status' atividade.id 'executando' %}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 1000)"><i class="fas fa-play text-success"></i></button>
-                                    <button class="btn btn-sm btn-white border" data-bs-toggle="modal" data-bs-target="#modalPausa{{ atividade.id }}"><i class="fas fa-pause text-warning"></i></button>
-                                    <button class="btn btn-sm btn-white border" hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 1000)"><i class="fas fa-check-double text-primary"></i></button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-light border" hx-post="{% url 'alterar_status' atividade.id 'executando' %}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 500)"><i class="fas fa-play text-success"></i></button>
+                                    <button class="btn btn-sm btn-light border" hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 500)"><i class="fas fa-check text-primary"></i></button>
                                 </div>
                             </td>
                         </tr>
-
-                        <div class="modal fade" id="modalPausa{{ atividade.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-warning text-dark"><h6 class="modal-title fw-bold">Pausar</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                    <div class="modal-body">
-                                        <textarea id="justificativa{{ atividade.id }}" name="justificativa" class="form-control" rows="3" placeholder="Motivo da pausa..."></textarea>
-                                        <button class="btn btn-warning w-100 mt-3 fw-bold" hx-post="{% url 'alterar_status' atividade.id 'pausada' %}" hx-include="#justificativa{{ atividade.id }}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 1000)">Confirmar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content border-0 shadow">
-                                    <div class="modal-header"><h6 class="modal-title fw-bold">Equipe</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                    <div class="modal-body">
-                                        {% csrf_token %}
-                                        <div class="tech-select-container">
-                                            <select name="tecnicos" class="form-select" multiple size="5">
-                                                {% for t in tecnicos %}<option value="{{ t.id }}" {% if t in atividade.colaboradores.all %}selected{% endif %}>{{ t.first_name|default:t.username }}</option>{% endfor %}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
-                                </form>
-                            </div>
-                        </div>
-                        
-                        <div class="modal fade" id="modalDetalhes{{ atividade.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-light"><h6 class="modal-title fw-bold">Timeline OS #{{ atividade.id }}</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                    <div class="modal-body">
-                                        <ul class="timeline">
-                                            {% for log in atividade.logs.all|dictsortreversed:"data_registro" %}
-                                            <li class="timeline-item">
-                                                <div class="timeline-date">{{ log.data_registro|date:"d/m/Y H:i" }} - {{ log.usuario.username }}</div>
-                                                <div class="timeline-content">{{ log.descricao }}</div>
-                                            </li>
-                                            {% empty %}
-                                            <li class="timeline-item text-muted">Sem registros.</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+    </main>
+</div>
 
-        <div class="mt-5 text-center">
-            <button class="btn btn-light text-muted border btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#historicoCollapse">
-                <i class="fas fa-history me-2"></i>Ver Histórico Completo
-            </button>
-        </div>
-        <div class="collapse mt-3 mb-5" id="historicoCollapse">
-            <div class="card card-body border-0 shadow-sm">
-                <table class="table table-sm text-muted mb-0 align-middle">
-                    <thead><tr><th>Tipo</th><th>Máquina</th><th>Descrição / Motivo</th><th>Status</th><th>Data</th></tr></thead>
-                    <tbody>
-                        {% for item in historico_unificado %}
-                            {% if item.prioridade_indicada %} 
-                                <tr class="bg-light">
-                                    <td><span class="badge bg-secondary">CHAMADO #{{ item.id }}</span></td>
-                                    <td class="fw-bold">{{ item.maquina.codigo }}</td>
-                                    <td>
-                                        <div class="text-decoration-line-through text-muted small">{{ item.descricao_problema }}</div>
-                                        <div class="text-danger small fw-bold mt-1"><i class="fas fa-ban me-1"></i>Motivo: {{ item.motivo_resposta }}</div>
-                                    </td>
-                                    <td><span class="badge bg-light text-secondary border">RECUSADO</span></td>
-                                    <td>{{ item.data_abertura|date:"d/m/Y H:i" }}</td>
-                                </tr>
-                            {% else %}
-                                <tr>
-                                    <td><span class="badge bg-primary">OS #{{ item.id }}</span></td>
-                                    <td class="fw-bold">{{ item.maquina.codigo }}</td>
-                                    <td>
-                                        <div>{{ item.descricao }}</div>
-                                        <div class="small text-muted">Técnicos: {{ item.colaboradores.all|join:", " }}</div>
-                                    </td>
-                                    <td><span class="badge bg-success-subtle text-success border border-success">CONCLUÍDO</span></td>
-                                    <td>{{ item.fim_calculado|date:"d/m/Y H:i" }}</td>
-                                </tr>
-                            {% endif %}
-                        {% empty %}
-                            <tr><td colspan="5" class="text-center py-3">Nenhum histórico encontrado.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modalAtividade" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white"><h6 class="modal-title fw-bold">Nova OS</h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-                <form method="post"><div class="modal-body p-4">{% csrf_token %}{{ form.as_p }}</div><div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div></form>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function filtrarTabela() {
-            const filtro = document.getElementById('filtroTecnico').value;
-            document.querySelectorAll('.linha-tarefa').forEach(l => l.style.display = (filtro === 'todos' || l.dataset.techIds.includes(filtro)) ? '' : 'none');
-        }
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function filtrarTabela() {
+        const filtro = document.getElementById('filtroTecnico').value;
+        document.querySelectorAll('.linha-tarefa').forEach(l => l.style.display = (filtro === 'todos' || l.dataset.techIds.includes(filtro)) ? '' : 'none');
+    }
+</script>
 </body>
 </html>
