@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import timedelta
 
 class Maquina(models.Model):
     nome = models.CharField(max_length=100)
@@ -9,11 +10,22 @@ class Maquina(models.Model):
     def __str__(self):
         return f"{self.codigo} - {self.nome}"
     
+class PlanoPreventivo(models.Model):
+    nome = models.CharField(max_length=100, help_text="Ex: Lubrificação Semanal")
+    maquina = models.ForeignKey(Maquina, on_delete=models.CASCADE)
+    procedimento_padrao = models.ForeignKey('ProcedimentoPreventivo', on_delete=models.SET_NULL, null=True, blank=True)
+    frequencia_dias = models.IntegerField(help_text="A cada quantos dias deve ocorrer?")
+    proxima_data = models.DateField(help_text="Data da próxima geração automática")
+    ativo = models.BooleanField(default=True)
+    def __str__(self):
+        return f"{self.nome} - {self.maquina.codigo} (Cada {self.frequencia_dias} dias)"
+    
 class ProcedimentoPreventivo(models.Model):
     codigo = models.CharField(max_length=50, unique=True, verbose_name="Código da Preventiva")
     nome = models.CharField(max_length=200)
     instrucoes = models.TextField(blank=True, help_text="Passo a passo técnico")
-    duracao_estimada_padrao = models.DurationField(help_text="Tempo padrão para esta tarefa")   
+    duracao_estimada_padrao = models.DurationField(help_text="Tempo padrão para esta tarefa")
+    plano_origem = models.ForeignKey(PlanoPreventivo, on_delete=models.SET_NULL, null=True, blank=True)   
     def __str__(self):
         return f"{self.codigo} - {self.nome}" 
 

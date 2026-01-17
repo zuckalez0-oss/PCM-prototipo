@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LYPSYOS | PCM Manager</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+
+    <style>
+        :root { --sidebar-width: 300px; }
+        body { background: #f3f4f6; overflow-x: hidden; font-family: 'Inter', sans-serif; }
+
+        .dashboard-wrapper { display: flex; height: 100vh; }
+
+        /* Sidebar */
+        .analytics-sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 20px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 100;
+        }
+
+        /* Área Principal */
+        .gantt-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gantt-container { 
+            background: white; 
+            border-radius: 8px; 
+            border: 1px solid #e5e7eb; 
+            overflow: hidden; 
+            min-height: 500px;
+            flex-grow: 1;
+        }
+        
+        .gantt-status-aberta .bar { fill: #94a3b8; }
+        .gantt-status-executando .bar { fill: #22c55e; }
+        .gantt-status-pausada .bar { fill: #f59e0b; }
+        .gantt-status-finalizada .bar { fill: #3b82f6; }
+        .gantt-emergencial .bar { fill: #ef4444 !important; stroke: #991b1b; stroke-width: 2; }
+        
+        .chart-box { height: 180px; position: relative; width: 100%; }
+        .section-title { 
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; 
+            color: #64748b; letter-spacing: 0.05em; margin-bottom: 1rem; 
+            border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;
+        }
+
+        .navbar-custom { background-color: #1a202c; color: white; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    
+    <aside class="analytics-sidebar shadow-sm">
+        <div>
+            <h5 class="fw-bold text-dark mb-0"><i class="fas fa-chart-line text-primary me-2"></i>LYPSYOS</h5>
+            <small class="text-muted" style="font-size: 0.8rem;">PCM Intelligence Module</small>
+        </div>
+
+        <div>
+            <div class="section-title"><i class="fas fa-bolt me-2"></i>Índice de Quebras</div>
+            <div class="chart-box">
+                <canvas id="chartQuebras"></canvas>
+            </div>
+            <small class="text-muted text-center d-block mt-2" style="font-size: 0.7rem;">Máquinas com mais corretivas</small>
+        </div>
+
+        <div>
+            <div class="section-title"><i class="fas fa-calendar-check me-2"></i>Próximas Preventivas</div>
+            <ul class="list-group list-group-flush small">
+                {% for plano in planos_futuros %}
+                <li class="list-group-item px-0 border-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">{{ plano.nome }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">{{ plano.maquina.codigo }}</div>
+                    </div>
+                    <span class="badge bg-light text-dark border">{{ plano.proxima_data|date:"d/m" }}</span>
+                </li>
+                {% empty %}
+                <li class="text-muted small text-center">Nenhum plano futuro agendado.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </aside>
+
+    <main class="gantt-area">
+        <nav class="navbar-custom mb-4 p-3 shadow-sm d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'lista_atividades' %}" class="btn btn-outline-light btn-sm me-3 border-secondary">
+                    <i class="fas fa-chevron-left me-1"></i> Voltar
+                </a>
+                <div>
+                    <h6 class="mb-0 fw-bold">Painel Operacional</h6>
+                    <small class="opacity-75" style="font-size: 0.7rem;">PLANEJAMENTO VISUAL</small>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-light border-secondary" onclick="changeView('Day')">Dia</button>
+                <button class="btn btn-sm btn-outline-light border-secondary" onclick="changeView('Week')">Semana</button>
+                <button class="btn btn-sm btn-outline-light border-secondary" onclick="changeView('Month')">Mês</button>
+            </div>
+        </nav>
+
+        <div class="gantt-container shadow-sm">
+            <svg id="gantt-target"></svg>
+        </div>
+    </main>
+
+</div>
+
+{{ labels_quebra|json_script:"dados-labels" }}
+{{ data_quebra|json_script:"dados-valores" }}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // --- 1. GRÁFICO (Chart.js) CORRIGIDO ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('chartQuebras').getContext('2d');
+        
+        // AQUI ESTÁ A CORREÇÃO: Lemos o conteúdo do json_script pelo ID
+        // O VS Code não vai reclamar disso pois é Javascript puro válido.
+        const labels = JSON.parse(document.getElementById('dados-labels').textContent);
+        const data = JSON.parse(document.getElementById('dados-valores').textContent);
+
+        if(labels && labels.length > 0) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ocorrências',
+                        data: data,
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { display: false }, ticks: { stepSize: 1 } }, 
+                        x: { grid: { display: false } } 
+                    }
+                }
+            });
+        } else {
+            // Se não tiver dados, desenha um texto simples
+            ctx.font = "14px Inter";
+            ctx.fillStyle = "#64748b";
+            ctx.fillText("Sem dados de quebra registrados.", 10, 100);
+        }
+    });
+
+    // --- 2. GANTT ---
+    let gantt_chart;
+
+    async function initGantt() {
+        try {
+            const res = await fetch('/api/gantt/dados/'); 
+            const tasks = await res.json();
+
+            if (!tasks || tasks.length === 0) {
+                document.querySelector('.gantt-container').innerHTML = 
+                    "<div class='d-flex justify-content-center align-items-center h-100 text-muted'>Nenhuma tarefa programada para exibir.</div>";
+                return;
+            }
+
+            gantt_chart = new Gantt("#gantt-target", tasks, {
+                view_mode: 'Day',
+                column_width: 30,
+                bar_height: 25,
+                padding: 18,
+                date_format: 'YYYY-MM-DD',
+                language: 'ptBr', // Se der erro de idioma, remova esta linha
+                on_click: task => console.log("Clicou:", task),
+                on_date_change: (task, start, end) => console.log("Nova data:", start, end)
+            });
+        } catch (err) {
+            console.error("Erro no Gantt:", err);
+            document.querySelector('.gantt-container').innerHTML = 
+                "<div class='p-5 text-center text-danger'>Erro ao carregar cronograma. Verifique o console (F12).</div>";
+        }
+    }
+
+    function changeView(mode) {
+        if(gantt_chart) gantt_chart.change_view_mode(mode);
+    }
+
+    window.onload = initGantt;
+</script>
+
+</body>
+</html>
