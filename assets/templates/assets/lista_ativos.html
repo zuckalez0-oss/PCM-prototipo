@@ -119,39 +119,32 @@
         {% if chamados_pendentes %}
         <div class="card mb-4 border-warning">
             <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-inbox me-2"></i>TRIAGEM DE CHAMADOS</h6>
+                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-inbox me-2"></i>TRIAGEM (PENDENTES)</h6>
                 <span class="badge bg-warning text-dark">{{ chamados_pendentes|length }} Pendentes</span>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th class="ps-4">Prioridade</th><th>Máquina</th><th>Descrição</th><th>Atribuir</th><th class="text-end pe-4">Ações</th>
-                        </tr>
-                    </thead>
+                <table class="table table-hover mb-0 align-middle">
+                    <thead><tr><th class="ps-4">Prioridade</th><th>Máquina</th><th>Problema</th><th>Atribuir</th><th class="text-end pe-4">Ações</th></tr></thead>
                     <tbody>
                         {% for chamado in chamados_pendentes %}
                         <tr class="bg-white">
                             <td class="ps-4">
-                                {% if chamado.prioridade_indicada == 'alta' %} <span class="badge bg-danger">ALTA</span>
-                                {% else %} <span class="badge bg-secondary">NORMAL</span> {% endif %}
+                                {% if chamado.prioridade_indicada == 'alta' %}<span class="badge bg-danger">ALTA</span>{% else %}<span class="badge bg-secondary">NORMAL</span>{% endif %}
                             </td>
                             <td>
                                 <div class="fw-bold">{{ chamado.maquina.codigo }}</div>
-                                {% if chamado.maquina_parada %}<span class="badge bg-danger" style="font-size: 0.6rem;">MÁQUINA PARADA</span>{% endif %}
+                                {% if chamado.maquina_parada %}<span class="badge bg-danger" style="font-size: 0.6rem;">PARADA</span>{% endif %}
                             </td>
                             <td>
                                 <div class="text-dark">{{ chamado.descricao_problema }}</div>
-                                <small class="text-muted">Por: {{ chamado.requisitante.username }} às {{ chamado.data_abertura|date:"H:i" }}</small>
+                                <small class="text-muted">Req: {{ chamado.requisitante.username }}</small>
                             </td>
                             <td>
                                 <form action="{% url 'aprovar_chamado' chamado.id %}" method="post" class="d-flex gap-2">
                                     {% csrf_token %}
-                                    <select name="tecnico" class="form-select form-select-sm" required style="width: 180px;">
-                                        <option value="" selected disabled>Escolher Técnico...</option>
-                                        {% for t in tecnicos %}
-                                            <option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>
-                                        {% endfor %}
+                                    <select name="tecnico" class="form-select form-select-sm" required style="width: 150px;">
+                                        <option value="" selected disabled>Técnico...</option>
+                                        {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
                                     </select>
                                     <button type="submit" class="btn btn-success btn-sm fw-bold">OK</button>
                                 </form>
@@ -160,24 +153,27 @@
                                 <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalRecusa{{ chamado.id }}">
                                     <i class="fas fa-times-circle"></i>
                                 </button>
+
+                                <div class="modal fade text-start" id="modalRecusa{{ chamado.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <form action="{% url 'recusar_chamado' chamado.id %}" method="post" class="modal-content border-0 shadow">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-danger text-white">
+                                                <h6 class="modal-title">Rejeitar Chamado #{{ chamado.id }}</h6>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <label class="form-label fw-bold">Motivo da Rejeição</label>
+                                                <textarea name="motivo" class="form-control" rows="3" required placeholder="Ex: Informação insuficiente..."></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-danger w-100">Confirmar Rejeição</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
-                        <div class="modal fade" id="modalRecusa{{ chamado.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <form action="{% url 'recusar_chamado' chamado.id %}" method="post" class="modal-content border-0 shadow">
-                                    {% csrf_token %}
-                                    <div class="modal-header bg-danger text-white">
-                                        <h6 class="modal-title">Rejeitar Chamado #{{ chamado.id }}</h6>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <label class="form-label fw-bold">Motivo</label>
-                                        <textarea name="motivo" class="form-control" rows="3" required></textarea>
-                                    </div>
-                                    <div class="modal-footer"><button type="submit" class="btn btn-danger w-100">Confirmar</button></div>
-                                </form>
-                            </div>
-                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -186,31 +182,25 @@
         {% endif %}
 
         <div class="card">
-            <div class="card-header bg-white py-3">
-                <div class="row align-items-center">
-                    <div class="col-md-6"><h6 class="mb-0 fw-bold text-primary"><i class="fas fa-tasks me-2"></i>FILA DE OPERAÇÃO (OS)</h6></div>
-                    <div class="col-md-6 text-end">
-                        <div class="d-inline-flex align-items-center gap-2">
-                            <span class="small text-muted fw-bold">FILTRO:</span>
-                            <select id="filtroTecnico" class="form-select form-select-sm" style="width: 200px;" onchange="filtrarTabela()">
-                                <option value="todos">Todos</option>
-                                {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
-                            </select>
-                        </div>
-                    </div>
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-tasks me-2"></i>FILA DE OPERAÇÃO (OS)</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="fw-bold text-muted">FILTRO:</small>
+                    <select id="filtroTecnico" class="form-select form-select-sm w-auto" onchange="filtrarTabela()">
+                        <option value="todos">Todos</option>
+                        {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead>
-                        <tr><th class="ps-4">OS ID</th><th>Atividade</th><th>Equipe</th><th>Status & Justificativa</th><th>Cronômetro</th><th class="text-center">Controles</th></tr>
-                    </thead>
+                    <thead><tr><th class="ps-4">OS ID</th><th>Atividade</th><th>Equipe</th><th>Status & Justificativa</th><th>Cronômetro</th><th class="text-center">Controles</th></tr></thead>
                     <tbody>
                         {% for atividade in atividades %}
-                        <tr class="linha-tarefa bg-white" data-tech-ids="{% for colab in atividade.colaboradores.all %}{{ colab.id }},{% endfor %}">
+                        <tr class="linha-tarefa" data-tech-ids="{% for c in atividade.colaboradores.all %}{{ c.id }},{% endfor %}">
                             <td class="ps-4 fw-bold text-muted">#{{ atividade.id }}</td>
                             <td>
-                                <div class="fw-bold text-dark">{{ atividade.maquina.codigo }}</div>
+                                <div class="fw-bold">{{ atividade.maquina.codigo }}</div>
                                 <div class="small text-muted">{{ atividade.descricao }}</div>
                                 <button class="btn btn-link btn-sm p-0 text-decoration-none mt-1" data-bs-toggle="modal" data-bs-target="#modalDetalhes{{ atividade.id }}">
                                     <i class="fas fa-info-circle text-info"></i> <span class="small fw-bold">Ver Histórico</span>
@@ -219,9 +209,7 @@
                             <td>
                                 <button class="btn btn-light border btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTecnicos{{ atividade.id }}">
                                     <i class="fas fa-users text-primary"></i>
-                                    <span class="small fw-bold">
-                                        {% if atividade.colaboradores.all %}{{ atividade.colaboradores.count }} Téc.{% else %}<span class="text-danger">Definir</span>{% endif %}
-                                    </span>
+                                    <span class="small fw-bold">{% if atividade.colaboradores.all %}{{ atividade.colaboradores.count }} Téc.{% else %}<span class="text-danger">Definir</span>{% endif %}</span>
                                 </button>
                                 <div class="small text-muted mt-1">
                                     {% for c in atividade.colaboradores.all %}{{ c.first_name|default:c.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
@@ -236,112 +224,65 @@
                                 </div>
                             </td>
                             <td>
-                                {% if atividade.status == 'executando' %} <span class="text-success fw-bold small spinner-grow spinner-grow-sm me-1"></span>Executando...
-                                {% else %} <span class="text-muted small">--:--</span> {% endif %}
+                                {% if atividade.status == 'executando' %}<span class="text-success fw-bold small spinner-grow spinner-grow-sm me-1"></span>Executando...{% else %}<span class="text-muted small">--:--</span>{% endif %}
                             </td>
                             <td class="text-center">
                                 <div class="btn-group shadow-sm">
-                                    <button class="btn btn-sm btn-white border" title="Iniciar"
-                                            hx-post="{% url 'alterar_status' atividade.id 'executando' %}" 
-                                            hx-target="#status-container-{{ atividade.id }}"
-                                            onclick="setTimeout(()=>location.reload(), 1000)">
-                                        <i class="fas fa-play text-success"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-white border" title="Pausar"
-                                            data-bs-toggle="modal" data-bs-target="#modalPausa{{ atividade.id }}">
-                                        <i class="fas fa-pause text-warning"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-white border" title="Finalizar"
-                                            hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}"
-                                            hx-target="#status-container-{{ atividade.id }}"
-                                            onclick="setTimeout(()=>location.reload(), 1000)">
-                                        <i class="fas fa-check-double text-primary"></i>
-                                    </button>
+                                    <button class="btn btn-sm btn-white border" hx-post="{% url 'alterar_status' atividade.id 'executando' %}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 1000)"><i class="fas fa-play text-success"></i></button>
+                                    <button class="btn btn-sm btn-white border" data-bs-toggle="modal" data-bs-target="#modalPausa{{ atividade.id }}"><i class="fas fa-pause text-warning"></i></button>
+                                    <button class="btn btn-sm btn-white border" hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 1000)"><i class="fas fa-check-double text-primary"></i></button>
                                 </div>
                             </td>
                         </tr>
 
-                        <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content border-0 shadow-lg">
-                                    {% csrf_token %}
-                                    <div class="modal-header border-bottom-0">
-                                        <h5 class="modal-title fw-bold">Editar Equipe</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body pt-0">
-                                        <div class="tech-select-container">
-                                            <label class="form-label small fw-bold text-uppercase text-muted">Selecione (Segure CTRL para vários)</label>
-                                            <select name="tecnicos" class="form-select w-100" multiple size="5">
-                                                {% for t in tecnicos %}
-                                                    <option value="{{ t.id }}" class="py-2 px-2" {% if t in atividade.colaboradores.all %}selected{% endif %}>
-                                                        👤 {{ t.first_name|default:t.username }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-top-0">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary px-4 fw-bold">Salvar</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-
                         <div class="modal fade" id="modalPausa{{ atividade.id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-warning text-dark">
-                                        <h6 class="modal-title fw-bold">Pausar Atividade</h6>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <label class="form-label fw-bold small">Motivo da Pausa</label>
-                                        <textarea id="justificativa{{ atividade.id }}" name="justificativa" class="form-control" rows="3" required></textarea>
-                                        <button class="btn btn-warning w-100 mt-3 fw-bold"
-                                                hx-post="{% url 'alterar_status' atividade.id 'pausada' %}"
-                                                hx-include="#justificativa{{ atividade.id }}"
-                                                hx-target="#status-container-{{ atividade.id }}"
-                                                onclick="setTimeout(()=>location.reload(), 1000)">
-                                            Confirmar Pausa
-                                        </button>
+                                    <div class="modal-header bg-warning text-dark"><h6 class="modal-title fw-bold">Pausar</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                    <div class="modal-body">
+                                        <textarea id="justificativa{{ atividade.id }}" name="justificativa" class="form-control" rows="3" placeholder="Motivo da pausa..."></textarea>
+                                        <button class="btn btn-warning w-100 mt-3 fw-bold" hx-post="{% url 'alterar_status' atividade.id 'pausada' %}" hx-include="#justificativa{{ atividade.id }}" hx-target="#status-container-{{ atividade.id }}" onclick="setTimeout(()=>location.reload(), 1000)">Confirmar</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="modal fade" id="modalDetalhes{{ atividade.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-light">
-                                        <h6 class="modal-title fw-bold text-primary"><i class="fas fa-history me-2"></i>Histórico Completo OS #{{ atividade.id }}</h6>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <div class="row mb-3">
-                                            <div class="col-6"><label class="small text-muted fw-bold">ATIVIDADE</label><p class="fw-bold">{{ atividade.descricao }}</p></div>
-                                            <div class="col-6"><label class="small text-muted fw-bold">STATUS</label><p>{{ atividade.get_status_display }}</p></div>
+                        
+                        <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content border-0 shadow">
+                                    <div class="modal-header"><h6 class="modal-title fw-bold">Equipe</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                    <div class="modal-body">
+                                        {% csrf_token %}
+                                        <div class="tech-select-container">
+                                            <select name="tecnicos" class="form-select" multiple size="5">
+                                                {% for t in tecnicos %}<option value="{{ t.id }}" {% if t in atividade.colaboradores.all %}selected{% endif %}>{{ t.first_name|default:t.username }}</option>{% endfor %}
+                                            </select>
                                         </div>
-                                        <hr>
-                                        <h6 class="fw-bold"><i class="fas fa-stream me-2 text-muted"></i>Linha do Tempo</h6>
+                                    </div>
+                                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="modal fade" id="modalDetalhes{{ atividade.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header bg-light"><h6 class="modal-title fw-bold">Timeline OS #{{ atividade.id }}</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                    <div class="modal-body">
                                         <ul class="timeline">
                                             {% for log in atividade.logs.all|dictsortreversed:"data_registro" %}
                                             <li class="timeline-item">
                                                 <div class="timeline-date">{{ log.data_registro|date:"d/m/Y H:i" }} - {{ log.usuario.username }}</div>
-                                                <div class="timeline-content">
-                                                    {{ log.descricao }}
-                                                </div>
+                                                <div class="timeline-content">{{ log.descricao }}</div>
                                             </li>
                                             {% empty %}
-                                            <li class="timeline-item"><div class="timeline-content text-muted">Sem registros de alteração.</div></li>
+                                            <li class="timeline-item text-muted">Sem registros.</li>
                                             {% endfor %}
                                         </ul>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                         {% endfor %}
                     </tbody>
                 </table>
@@ -350,44 +291,40 @@
 
         <div class="mt-5 text-center">
             <button class="btn btn-light text-muted border btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#historicoCollapse">
-                <i class="fas fa-history me-2"></i>Ver Histórico de Concluídas
+                <i class="fas fa-history me-2"></i>Ver Histórico Completo
             </button>
         </div>
         <div class="collapse mt-3 mb-5" id="historicoCollapse">
             <div class="card card-body border-0 shadow-sm">
-                <table class="table table-sm text-muted mb-0">
-                    <thead><tr><th>Máquina</th><th>Descrição</th><th>Técnicos</th><th>Duração Total</th><th>Data Fim</th><th>Ações</th></tr></thead>
+                <table class="table table-sm text-muted mb-0 align-middle">
+                    <thead><tr><th>Tipo</th><th>Máquina</th><th>Descrição / Motivo</th><th>Status</th><th>Data</th></tr></thead>
                     <tbody>
-                        {% for atividade in atividades_concluidas %}
-                        <tr>
-                            <td class="fw-bold">{{ atividade.maquina.codigo }}</td>
-                            <td>{{ atividade.descricao }}</td>
-                            <td>{% for c in atividade.colaboradores.all %}{{ c.first_name|default:c.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-                            <td class="text-primary fw-bold font-monospace"><i class="far fa-clock me-1"></i>{{ atividade.tempo_decimal|floatformat:2 }}h</td>
-                            <td>{{ atividade.fim_calculado|date:"d/m/Y H:i" }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-light border" data-bs-toggle="modal" data-bs-target="#modalDetalhes{{ atividade.id }}">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
-                                <div class="modal fade" id="modalDetalhes{{ atividade.id }}" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header bg-light"><h6 class="modal-title fw-bold">Histórico OS #{{ atividade.id }}</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                            <div class="modal-body p-4">
-                                                <ul class="timeline">
-                                                    {% for log in atividade.logs.all|dictsortreversed:"data_registro" %}
-                                                    <li class="timeline-item">
-                                                        <div class="timeline-date">{{ log.data_registro|date:"d/m/Y H:i" }}</div>
-                                                        <div class="timeline-content">{{ log.descricao }}</div>
-                                                    </li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
+                        {% for item in historico_unificado %}
+                            {% if item.prioridade_indicada %} 
+                                <tr class="bg-light">
+                                    <td><span class="badge bg-secondary">CHAMADO #{{ item.id }}</span></td>
+                                    <td class="fw-bold">{{ item.maquina.codigo }}</td>
+                                    <td>
+                                        <div class="text-decoration-line-through text-muted small">{{ item.descricao_problema }}</div>
+                                        <div class="text-danger small fw-bold mt-1"><i class="fas fa-ban me-1"></i>Motivo: {{ item.motivo_resposta }}</div>
+                                    </td>
+                                    <td><span class="badge bg-light text-secondary border">RECUSADO</span></td>
+                                    <td>{{ item.data_abertura|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td><span class="badge bg-primary">OS #{{ item.id }}</span></td>
+                                    <td class="fw-bold">{{ item.maquina.codigo }}</td>
+                                    <td>
+                                        <div>{{ item.descricao }}</div>
+                                        <div class="small text-muted">Técnicos: {{ item.colaboradores.all|join:", " }}</div>
+                                    </td>
+                                    <td><span class="badge bg-success-subtle text-success border border-success">CONCLUÍDO</span></td>
+                                    <td>{{ item.fim_calculado|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            {% endif %}
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center py-3">Nenhum histórico encontrado.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -398,25 +335,8 @@
     <div class="modal fade" id="modalAtividade" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white">
-                    <h6 class="modal-title fw-bold">Nova Ordem de Serviço</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="modal-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-6"><label class="form-label small fw-bold">Máquina</label>{{ form.maquina }}</div>
-                            <div class="col-md-6"><label class="form-label small fw-bold">Data Planejada</label>{{ form.data_planejada }}</div>
-                            <div class="col-12"><div class="form-check form-switch bg-light p-3 rounded border">{{ form.eh_preventiva }}<label class="form-check-label ms-2 fw-bold" for="checkPreventiva">É Manutenção Preventiva?</label></div></div>
-                            <div id="sectionPreventiva" class="col-12 d-none"><label class="form-label text-primary fw-bold">Procedimento Padrão</label>{{ form.procedimento_base }}</div>
-                            <div id="sectionDescricao" class="col-12"><label class="form-label small fw-bold">Descrição</label>{{ form.descricao }}</div>
-                            <div class="col-12"><label class="form-label small fw-bold">Técnicos</label>{{ form.colaboradores }}</div>
-                            <div id="sectionTempo" class="col-12"><div class="row"><div class="col-6"><label class="form-label small fw-bold">Tempo</label>{{ form.tempo_valor }}</div><div class="col-6"><label class="form-label small fw-bold">Unidade</label>{{ form.tempo_unidade }}</div></div></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer bg-light"><button type="submit" class="btn btn-primary px-4 fw-bold">Gerar OS</button></div>
-                </form>
+                <div class="modal-header bg-primary text-white"><h6 class="modal-title fw-bold">Nova OS</h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <form method="post"><div class="modal-body p-4">{% csrf_token %}{{ form.as_p }}</div><div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div></form>
             </div>
         </div>
     </div>
@@ -425,27 +345,8 @@
     <script>
         function filtrarTabela() {
             const filtro = document.getElementById('filtroTecnico').value;
-            const linhas = document.querySelectorAll('.linha-tarefa');
-            linhas.forEach(linha => {
-                const techs = linha.getAttribute('data-tech-ids');
-                if (filtro === 'todos' || techs.includes(filtro)) { linha.style.display = ''; } else { linha.style.display = 'none'; }
-            });
+            document.querySelectorAll('.linha-tarefa').forEach(l => l.style.display = (filtro === 'todos' || l.dataset.techIds.includes(filtro)) ? '' : 'none');
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            const check = document.getElementById('id_eh_preventiva') || document.querySelector('input[name="eh_preventiva"]');
-            const sectionPrev = document.getElementById('sectionPreventiva');
-            const sectionDesc = document.getElementById('sectionDescricao');
-            const sectionTempo = document.getElementById('sectionTempo');
-            if(check) {
-                check.addEventListener('change', function() {
-                    if(this.checked) {
-                        sectionPrev.classList.remove('d-none'); sectionDesc.classList.add('d-none'); sectionTempo.classList.add('d-none');
-                    } else {
-                        sectionPrev.classList.add('d-none'); sectionDesc.classList.remove('d-none'); sectionTempo.classList.remove('d-none');
-                    }
-                });
-            }
-        });
     </script>
 </body>
 </html>
