@@ -8,49 +8,29 @@ from .models import Atividade, PlanoPreventivo
 
 
 class AtividadeForm(forms.ModelForm):
-    # Campos extras para cálculo de tempo
-    tempo_valor = forms.IntegerField(
-        label="Quantidade", 
-        initial=2, 
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
+    # Campos extras para controle de tempo e seleção de usuários
+    tempo_valor = forms.IntegerField(label="Duração", initial=1, required=False)
     tempo_unidade = forms.ChoiceField(
-        label="Unidade",
         choices=[('horas', 'Horas'), ('dias', 'Dias')],
-        widget=forms.Select(attrs={'class': 'form-select'})
+        label="Unidade",
+        initial='horas',
+        required=False
+    )
+    colaboradores = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
     )
 
     class Meta:
         model = Atividade
-        # Atualizado: 'colaboradores' no plural
-        fields = [
-            'maquina', 'descricao', 'colaboradores', 'data_planejada', 
-            'eh_preventiva', 'procedimento_base', 'eh_emergencial'
-        ]
+        fields = ['maquina', 'descricao', 'data_planejada', 'eh_preventiva', 'procedimento_base', 'eh_emergencial']
         widgets = {
+            'data_planejada': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'maquina': forms.Select(attrs={'class': 'form-select'}),
-            'descricao': forms.TextInput(attrs={'class': 'form-control'}),
-            # NOVIDADE: SelectMultiple permite selecionar vários com CTRL pressionado
-            'colaboradores': forms.SelectMultiple(attrs={
-                'class': 'form-select', 
-                'style': 'height: 120px;'
-            }),
-            'data_planejada': forms.DateTimeInput(attrs={
-                'class': 'form-control', 
-                'type': 'datetime-local'
-            }),
-            'eh_preventiva': forms.CheckboxInput(attrs={
-                'class': 'form-check-input', 
-                'id': 'checkPreventiva'
-            }),
-            'procedimento_base': forms.Select(attrs={
-                'class': 'form-select', 
-                'id': 'selectPreventiva'
-            }),
-            'eh_emergencial': forms.CheckboxInput(attrs={
-                'class': 'form-check-input', 
-                'id': 'id_eh_emergencial'
-            }),
+            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'procedimento_base': forms.Select(attrs={'class': 'form-select'}),
+            'eh_preventiva': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
         }
 
     def __init__(self, *args, **kwargs):

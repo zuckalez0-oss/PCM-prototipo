@@ -12,7 +12,6 @@
         .gantt-status-pausada .bar { fill: #f59e0b; }
         .gantt-status-finalizada .bar { fill: #3b82f6; }
         .gantt-container { background: white; border-radius: 8px; overflow: auto; min-height: 500px; }
-        /* Adicione no <style> do seu gantt.html */
         .gantt-emergencial .bar { 
             fill: #ff0000 !important; 
             stroke: #8b0000;
@@ -50,7 +49,6 @@
         </div>
     </div>
 
-    <!-- SCRIPTS (Note a ordem: Snap.svg é obrigatório antes do Gantt) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
@@ -71,7 +69,6 @@
                     return;
                 }
 
-                // REMOVEMOS o 'language: pt-br' que estava causando o erro de leitura '11'
                 gantt_chart = new Gantt("#gantt-target", tasks, {
                     view_mode: 'Day',
                     column_width: 40,
@@ -90,7 +87,6 @@
             if(gantt_chart) gantt_chart.change_view_mode(mode);
         }
 
-        // Tenta carregar assim que a página abrir
         window.onload = initGantt;
     </script>
 </body>

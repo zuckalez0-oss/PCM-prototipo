@@ -12,6 +12,7 @@ from operator import attrgetter
 from django.db.models import Count, Q
 
 from .models import Atividade, AtividadeLog, Maquina, Chamado, PlanoPreventivo
+
 from .forms import AtividadeForm
 from .utils import sequenciar_atividades
 from .forms import AtividadeForm, PlanoPreventivoForm 
@@ -96,60 +97,76 @@ def dados_gantt(request):
 
 @login_required
 def dashboard_analitico(request):
-    # 1. Roda o Robô
-    novas = verificar_e_gerar_preventivas()
-    if novas: messages.info(request, f"{novas} preventivas geradas.")
+    # 1. Robô de Preventivas
+    novas_ops = verificar_e_gerar_preventivas()
+    if novas_ops > 0:
+        messages.info(request, f"{novas_ops} preventivas geradas automaticamente.")
 
-    # 2. Processamento dos Formulários (Nova Tarefa OU Novo Plano)
+    # Inicializa os forms vazios (prefix evita conflito de nomes)
     form_atividade = AtividadeForm(prefix='atividade')
     form_plano = PlanoPreventivoForm(prefix='plano')
 
     if request.method == 'POST':
-        # Verifica qual formulário foi enviado pelo nome do botão
+        # Verifica se o botão clicado foi o de Nova Atividade
         if 'btn_nova_atividade' in request.POST:
             form_atividade = AtividadeForm(request.POST, prefix='atividade')
             if form_atividade.is_valid():
-                act = form_atividade.save(commit=False)
-                # Lógica de tempo (dias/horas)
-                valor = int(form_atividade.cleaned_data.get('tempo_valor', 0))
+                atividade = form_atividade.save(commit=False)
+                
+                # CORREÇÃO DE ERRO: Tratamento seguro para valores vazios
+                valor_raw = form_atividade.cleaned_data.get('tempo_valor')
+                valor = int(valor_raw) if valor_raw else 0
+                
                 unidade = form_atividade.cleaned_data.get('tempo_unidade', 'horas')
-                if unidade == 'dias': act.duracao_estimada = timedelta(days=valor)
-                else: act.duracao_estimada = timedelta(hours=valor)
                 
-                if act.eh_preventiva and act.procedimento_base:
-                    act.descricao = f"PREV: {act.procedimento_base.nome}"
+                if unidade == 'dias': 
+                    atividade.duracao_estimada = timedelta(days=valor)
+                else: 
+                    atividade.duracao_estimada = timedelta(hours=valor)
+
+                # Se for preventiva baseada em procedimento, puxa o nome
+                if atividade.eh_preventiva and atividade.procedimento_base:
+                    atividade.descricao = f"PREV: {atividade.procedimento_base.nome}"
+                    # Opcional: puxar duração padrão do procedimento
+                    # atividade.duracao_estimada = atividade.procedimento_base.duracao_estimada_padrao
                 
-                act.save()
-                form_atividade.save_m2m()
-                messages.success(request, "Nova OS criada!")
+                atividade.save()
+                form_atividade.save_m2m() # Salva os técnicos
+                messages.success(request, "Nova atividade agendada com sucesso!")
                 return redirect('dashboard_analitico')
 
+        # Verifica se o botão clicado foi o de Novo Plano Preventivo
         elif 'btn_novo_plano' in request.POST:
             form_plano = PlanoPreventivoForm(request.POST, prefix='plano')
             if form_plano.is_valid():
-                form_plano.save()
-                messages.success(request, "Novo Plano Preventivo cadastrado!")
+                plano = form_plano.save(commit=False)
+                plano.ativo = True # Garante que nasce ativo
+                plano.save()
+                messages.success(request, "Novo Plano de Manutenção cadastrado!")
                 return redirect('dashboard_analitico')
+            else:
+                messages.error(request, "Erro ao cadastrar plano. Verifique os dados.")
 
-    # 3. Dados dos Gráficos e Sidebar
-    quebras = Atividade.objects.filter(eh_preventiva=False).values('maquina__codigo').annotate(total=Count('id')).order_by('-total')[:5]
-    labels_quebra = [q['maquina__codigo'] for q in quebras]
-    data_quebra = [q['total'] for q in quebras]
-
-    # Lista de Planos Ativos
+    # 3. Dados para os Gráficos e Listas
+    quebras_por_maquina = Atividade.objects.filter(eh_preventiva=False).values('maquina__codigo').annotate(total=Count('id')).order_by('-total')[:5]
+    labels_quebra = [item['maquina__codigo'] for item in quebras_por_maquina]
+    data_quebra = [item['total'] for item in quebras_por_maquina]
+    
     planos_futuros = PlanoPreventivo.objects.filter(ativo=True).select_related('maquina').order_by('proxima_data')
     
     tecnicos = User.objects.all()
 
-    return render(request, 'assets/dashboard_completo.html', {
+    context = {
         'labels_quebra': labels_quebra,
         'data_quebra': data_quebra,
         'planos_futuros': planos_futuros,
-        'form_atividade': form_atividade,
-        'form_plano': form_plano, # Passamos o novo form para o template
+        'form_atividade': form_atividade, # Manda o form 1 para o template
+        'form_plano': form_plano,         # Manda o form 2 para o template
         'tecnicos': tecnicos,
         'today': timezone.now().date()
-    })
+    }
+    
+    return render(request, 'assets/dashboard_completo.html', context)
 
 @login_required
 def lista_atividades(request):
