@@ -218,6 +218,29 @@ def aprovar_chamado(request, chamado_id):
         chamado.save()
     return redirect('lista_atividades')
 
+# Adicione isso no seu assets/views.py
+
+@login_required
+def cancelar_atividade(request, atividade_id):
+    if request.method == 'POST':
+        atividade = get_object_or_404(Atividade, id=atividade_id)
+        motivo = request.POST.get('motivo')
+        
+        atividade.motivo_cancelamento = motivo
+        atividade.status = 'cancelada'
+        atividade.save()
+        
+        # Opcional: Gerar Log
+        AtividadeLog.objects.create(
+            atividade=atividade,
+            usuario=request.user,
+            status_novo='cancelada',
+            descricao=f"Atividade Cancelada. Motivo: {motivo}"
+        )
+        
+        messages.warning(request, f"Atividade #{atividade.id} cancelada.")
+    return redirect('lista_atividades')
+
 @login_required
 def recusar_chamado(request, chamado_id):
     if request.method == 'POST':
