@@ -3,135 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PCM | Painel de Controle</title>
+    <title>Inova Process | PCM Dashboard</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; }
-        .navbar { background-color: #1a202c; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .status-badge { font-size: 0.85rem; padding: 0.5em 1em; border-radius: 50px; font-weight: 600; }
+        :root {
+            --primary-bg: #f8fafc; /* Slate 50 */
+            --sidebar-bg: #0f172a; /* Slate 900 */
+            --card-bg: #ffffff;
+            --brand-color: #2563eb; /* Blue 600 */
+            --text-main: #334155; /* Slate 700 */
+            --text-muted: #64748b; /* Slate 500 */
+            --border-color: #e2e8f0;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--primary-bg); 
+            color: var(--text-main);
+        }
+
+        /* Navbar Moderna */
+        .navbar { 
+            background-color: var(--card-bg); 
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+        }
         
+        .navbar-brand {
+            color: var(--sidebar-bg) !important;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        /* Botões Padronizados */
+        .btn { font-weight: 500; border-radius: 6px; padding: 0.5rem 1rem; transition: all 0.2s; }
+        .btn-primary { background-color: var(--brand-color); border: none; }
+        .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+        .btn-outline-secondary { border-color: var(--border-color); color: var(--text-main); }
+        .btn-outline-secondary:hover { background-color: #f1f5f9; color: var(--sidebar-bg); }
+
+        /* Cards Modernos */
+        .card { 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            background: var(--card-bg);
+            margin-bottom: 24px;
+        }
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem;
+        }
+
+        /* Badges de Status (Padrão Industrial) */
+        .status-badge { font-size: 0.75rem; padding: 4px 12px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .status-aberta { background-color: #e2e8f0; color: #475569; }
-        .status-executando { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .status-pausada { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-        .status-finalizada { background-color: #dbeafe; color: #1e40af; }
+        .status-executando { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; } /* Verde Fiori */
+        .status-pausada { background-color: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+        .status-finalizada { background-color: #e0f2fe; color: #0369a1; }
         .status-cancelada { background-color: #fee2e2; color: #b91c1c; }
+        .status-recusado { background-color: #f1f5f9; color: #64748b; text-decoration: line-through; }
+
+        /* Tabela Limpa */
+        .table thead th {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            background-color: #f8fafc;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .table td { vertical-align: middle; border-bottom: 1px solid var(--border-color); }
         
-        .btn-action { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #dee2e6; background: white; }
-        .btn-action:hover { background: #f8f9fa; transform: translateY(-1px); }
-        
-        .section-label { font-size: 0.75rem; font-weight: 700; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
-        .w-fit { width: fit-content; }
-        
-        select[multiple] { height: 120px !important; }
-        .motivo-pausa-box { font-size: 0.75rem; color: #b45309; background: #fffbeb; padding: 4px 8px; border-radius: 4px; margin-top: 5px; border-left: 3px solid #f59e0b; }
-        
-        /* Novo estilo para o botão de troca de técnico */
-        .btn-tecnico-edit { background: #fff; border: 1px dashed #cbd5e1; transition: all 0.2s; text-align: left; width: 100%; padding: 8px; border-radius: 8px; }
-        .btn-tecnico-edit:hover { background: #f8fafc; border-color: #3b82f6; }
+        /* Utilitários */
+        .avatar-circle {
+            width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; 
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: bold; color: #475569; margin-right: -8px; border: 2px solid white;
+        }
+
+        /* Animações */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-dark mb-4 sticky-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold" href="#">
-                <i class="fas fa-tools me-2 text-primary"></i> PCM Industrial
+    <nav class="navbar sticky-top mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-industry me-2 text-primary"></i>INOVA PROCESS <span class="fw-light text-muted">| PCM</span>
             </a>
             <div class="d-flex gap-2">
-                <a href="{% url 'abrir_chamado' %}" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fas fa-bullhorn me-2"></i>Abrir Chamado
+                <a href="{% url 'abrir_chamado' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-2"></i>Novo Chamado
                 </a>
-                <a href="{% url 'pagina_gantt' %}" class="btn btn-outline-info btn-sm rounded-pill px-3">
-                    <i class="fas fa-chart-gantt me-2"></i>Ver Gantt
+                <a href="{% url 'pagina_gantt' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-chart-gantt me-2"></i>Cronograma
                 </a>
-                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow" data-bs-toggle="modal" data-bs-target="#modalAtividade">
-                    <i class="fas fa-plus me-2"></i>Nova Atividade
-                </button>
-                <a href="/admin" class="btn btn-outline-light btn-sm rounded-pill px-3">
-                    <i class="fas fa-user-cog me-2"></i>Admin
+                <a href="/admin" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-cog"></i>
                 </a>
-                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                    <i class="fas fa-sign-out-alt me-2"></i>Sair
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm border-0">
+                    <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid px-4">
+    <div class="container-fluid px-4 fade-in">
         
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>{{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
         {% endif %}
 
-        <div class="row mb-4">
+        <div class="row mb-4 g-3">
             <div class="col-md-3">
-                <div class="card p-3 d-flex flex-row align-items-center h-100 shadow-sm border-0">
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
-                        <i class="fas fa-clipboard-list fa-2x"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted mb-0 small fw-bold">OS ATIVAS</h6>
-                        <h4 class="fw-bold mb-0">{{ atividades|length }}</h4>
+                <div class="card p-3 border-start border-4 border-primary h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small fw-bold text-uppercase">OS em Execução</span>
+                            <h3 class="mb-0 fw-bold mt-1">{{ atividades|length }}</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                            <i class="fas fa-cogs"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
 
         {% if chamados_pendentes %}
-        <div class="card border-0 shadow-sm mb-5">
-            <div class="card-header bg-warning text-dark py-3">
-                <h6 class="mb-0 fw-bold"><i class="fas fa-user-check me-2"></i>TRIAGEM: DEFINIR TÉCNICO(S) E APROVAR</h6>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-warning"><i class="fas fa-inbox me-2"></i>PENDENTE APROVAÇÃO (TRIAGEM)</h6>
+                <span class="badge bg-warning text-dark">{{ chamados_pendentes|length }}</span>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr class="small text-muted" style="font-size: 0.7rem;">
-                            <th class="ps-4">MÁQUINA</th>
-                            <th>SOLICITAÇÃO DO OPERADOR</th>
-                            <th>ATRIBUIR RESPONSÁVEL (CTRL + CLIQUE PARA +1)</th>
-                            <th class="text-center">REJEITAR</th>
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Prioridade</th>
+                            <th>Máquina / Equipamento</th>
+                            <th>Problema Relatado</th>
+                            <th>Definir Técnico (OS)</th>
+                            <th class="text-end pe-4">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for chamado in chamados_pendentes %}
                         <tr>
                             <td class="ps-4">
-                                <span class="fw-bold text-dark">{{ chamado.maquina.codigo }}</span>
-                                {% if chamado.maquina_parada %}<br><span class="badge bg-danger" style="font-size: 0.6rem;">MÁQUINA PARADA</span>{% endif %}
+                                {% if chamado.prioridade_indicada == 'alta' %}
+                                    <span class="badge bg-danger">ALTA</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">NORMAL</span>
+                                {% endif %}
                             </td>
                             <td>
-                                <div class="small text-dark fw-bold">{{ chamado.descricao_problema }}</div>
-                                <small class="text-muted">Por: {{ chamado.requisitante.username }} às {{ chamado.data_abertura|date:"H:i" }}</small>
+                                <div class="fw-bold">{{ chamado.maquina.codigo }}</div>
+                                {% if chamado.maquina_parada %}
+                                    <small class="text-danger fw-bold"><i class="fas fa-stop-circle me-1"></i>PARADA</small>
+                                {% endif %}
                             </td>
                             <td>
-                                <form action="{% url 'aprovar_chamado' chamado.id %}" method="post" class="d-flex gap-2">
+                                <div class="text-dark">{{ chamado.descricao_problema }}</div>
+                                <small class="text-muted">Req: {{ chamado.requisitante.username }} • {{ chamado.data_abertura|date:"H:i" }}</small>
+                            </td>
+                            <td>
+                                <form action="{% url 'aprovar_chamado' chamado.id %}" method="post" class="d-flex gap-2 align-items-center">
                                     {% csrf_token %}
-                                    <select name="tecnico" class="form-select form-select-sm" multiple required style="max-width: 250px;">
+                                    <select name="tecnico" class="form-select form-select-sm" style="max-width: 200px;" required>
+                                        <option value="" selected disabled>Selecionar Técnico...</option>
                                         {% for t in tecnicos %}
                                             <option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="btn btn-success btn-sm px-3 fw-bold h-fit">Aprovar</button>
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i>
+                                    </button>
                                 </form>
                             </td>
-                            <td class="text-center">
-                                <button class="btn btn-outline-danger btn-sm border-0" data-bs-toggle="modal" data-bs-target="#modalRecusa{{ chamado.id }}">
-                                    <i class="fas fa-times-circle"></i>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalRecusa{{ chamado.id }}">
+                                    <i class="fas fa-ban me-1"></i> Rejeitar
                                 </button>
                             </td>
                         </tr>
+
+                        <div class="modal fade" id="modalRecusa{{ chamado.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <form action="{% url 'recusar_chamado' chamado.id %}" method="post" class="modal-content">
+                                    {% csrf_token %}
+                                    <div class="modal-header bg-danger text-white">
+                                        <h6 class="modal-title">Rejeitar Chamado #{{ chamado.id }}</h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="form-label small fw-bold">Motivo da Rejeição</label>
+                                        <textarea name="motivo" class="form-control" rows="3" required placeholder="Ex: Informações insuficientes, duplicado..."></textarea>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-danger">Confirmar Rejeição</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -139,116 +230,176 @@
         </div>
         {% endif %}
 
-        <div class="card overflow-hidden mb-5 shadow-sm border-0">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-play-circle me-2 text-primary"></i>FILA DE OPERAÇÃO</h6>
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-tasks me-2"></i>FILA DE OPERAÇÃO (OS)</h6>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-inline-flex align-items-center gap-2">
+                            <span class="small text-muted fw-bold">FILTRAR POR TÉCNICO:</span>
+                            <select id="filtroTecnico" class="form-select form-select-sm" style="width: 200px;" onchange="filtrarTabela()">
+                                <option value="todos">Todos os Técnicos</option>
+                                <option value="sem_tecnico">⚠️ Sem Técnico</option>
+                                {% for t in tecnicos %}
+                                    <option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr class="small text-muted" style="font-size: 0.7rem;">
-                            <th class="ps-4">MÁQUINA</th>
-                            <th>ATIVIDADE / CRONOGRAMA</th>
-                            <th style="min-width: 180px;">TÉCNICO(S)</th>
-                            <th>STATUS</th>
-                            <th class="text-center">AÇÕES</th>
+                <table class="table table-hover align-middle mb-0" id="tabelaOS">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">OS ID</th>
+                            <th>Atividade</th>
+                            <th>Equipe (Técnicos)</th>
+                            <th>Status</th>
+                            <th>Cronômetro</th>
+                            <th class="text-center">Controles</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for atividade in atividades %}
-                        <tr>
-                            <td class="ps-4">
-                                <div class="fw-bold text-primary">{{ atividade.maquina.codigo }}</div>
-                                <small class="text-muted small">{{ atividade.maquina.nome }}</small>
-                            </td>
+                        <tr class="linha-tarefa" data-tech-ids="{% for colab in atividade.colaboradores.all %}{{ colab.id }},{% endfor %}{% if not atividade.colaboradores.all %}sem_tecnico{% endif %}">
+                            <td class="ps-4 fw-bold text-muted">#{{ atividade.id }}</td>
                             <td>
-                                <div class="fw-bold d-flex align-items-center">
-                                    {% if atividade.eh_emergencial %}<i class="fas fa-exclamation-triangle text-danger me-1"></i>{% endif %}
-                                    {{ atividade.descricao }}
-                                    <button class="btn btn-link btn-sm p-0 ms-2 text-primary" data-bs-toggle="modal" data-bs-target="#modalExpandir{{ atividade.id }}">
-                                        <i class="fas fa-search-plus"></i>
-                                    </button>
-                                </div>
-                                <div class="text-muted" style="font-size: 0.75rem;">
-                                    <span class="badge bg-secondary-subtle text-secondary mb-1">Estimado: {{ atividade.duracao_formatada }}</span><br>
-                                    Início: {{ atividade.inicio_calculado|date:"d/m H:i" }} | Término: {{ atividade.fim_calculado|date:"d/m H:i" }}
+                                <div class="fw-bold text-dark">{{ atividade.maquina.codigo }} - {{ atividade.descricao }}</div>
+                                <div class="small text-muted">
+                                    <i class="far fa-clock me-1"></i>Estimado: {{ atividade.duracao_formatada }}
+                                    {% if atividade.eh_emergencial %}
+                                        <span class="badge bg-danger ms-2">EMERGÊNCIA</span>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td>
-                                <button class="btn-tecnico-edit d-flex align-items-center justify-content-between" 
-                                        data-bs-toggle="modal" data-bs-target="#modalTecnicos{{ atividade.id }}">
-                                    <div class="small">
-                                        <i class="fas fa-user-gear me-1 text-primary"></i>
-                                        {% for colab in atividade.colaboradores.all %}
-                                            {{ colab.first_name|default:colab.username }}{% if not forloop.last %}, {% endif %}
-                                        {% empty %}
-                                            <span class="text-danger fw-bold">Sem Técnico</span>
-                                        {% endfor %}
-                                    </div>
-                                    <i class="fas fa-pen fa-xs text-muted"></i>
-                                </button>
+                                <div class="d-flex align-items-center cursor-pointer" data-bs-toggle="modal" data-bs-target="#modalTecnicos{{ atividade.id }}">
+                                    {% for colab in atividade.colaboradores.all %}
+                                        <div class="avatar-circle" title="{{ colab.first_name }}">
+                                            {{ colab.first_name|first|default:colab.username|first|upper }}
+                                        </div>
+                                    {% empty %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger small">SEM TÉCNICO</span>
+                                    {% endfor %}
+                                    <i class="fas fa-pen fa-xs ms-2 text-muted opacity-50"></i>
+                                </div>
                             </td>
                             <td>
                                 <div id="status-container-{{ atividade.id }}">
                                     <span id="status-badge-{{ atividade.id }}" class="status-badge status-{{ atividade.status }}">
                                         {{ atividade.get_status_display }}
                                     </span>
-                                    {% if atividade.status == 'pausada' and atividade.motivo_pausa %}
-                                        <div class="motivo-pausa-box">
-                                            <i class="fas fa-info-circle me-1"></i>{{ atividade.motivo_pausa }}
-                                        </div>
-                                    {% endif %}
                                 </div>
                             </td>
+                            <td>
+                                {% if atividade.status == 'executando' %}
+                                    <span class="text-success fw-bold small animate-pulse">Executando...</span>
+                                {% else %}
+                                    <span class="text-muted small">--:--</span>
+                                {% endif %}
+                            </td>
                             <td class="text-center">
-                                <div class="btn-group shadow-sm">
-                                    <button class="btn btn-action" hx-post="{% url 'alterar_status' atividade.id 'executando' %}" hx-target="#status-badge-{{ atividade.id }}" hx-swap="outerHTML" onclick="setTimeout(()=>location.reload(), 500)"><i class="fas fa-play text-success"></i></button>
-                                    <button class="btn btn-action" data-bs-toggle="modal" data-bs-target="#modalPausa{{ atividade.id }}">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-light border" 
+                                            hx-post="{% url 'alterar_status' atividade.id 'executando' %}" 
+                                            hx-target="#status-badge-{{ atividade.id }}"
+                                            onclick="setTimeout(()=>location.reload(), 500)"
+                                            title="Iniciar">
+                                        <i class="fas fa-play text-success"></i>
+                                    </button>
+                                    
+                                    <button class="btn btn-sm btn-light border" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalPausa{{ atividade.id }}"
+                                            title="Pausar">
                                         <i class="fas fa-pause text-warning"></i>
                                     </button>
-                                    <button class="btn btn-action text-primary" onclick="setTimeout(()=>location.reload(), 500)" hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" hx-target="#status-badge-{{ atividade.id }}"><i class="fas fa-check-double"></i></button>
-                                    <button class="btn btn-action text-danger" data-bs-toggle="modal" data-bs-target="#modalCancela{{ atividade.id }}"><i class="fas fa-trash"></i></button>
+                                    
+                                    <button class="btn btn-sm btn-light border" 
+                                            hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}" 
+                                            hx-target="#status-badge-{{ atividade.id }}"
+                                            onclick="setTimeout(()=>location.reload(), 500)"
+                                            title="Finalizar">
+                                        <i class="fas fa-check-double text-primary"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
+                        
+                        <div class="modal fade" id="modalPausa{{ atividade.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-warning-subtle">
+                                        <h6 class="modal-title fw-bold">Pausar Atividade #{{ atividade.id }}</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="form-label small text-muted">Motivo da Pausa</label>
+                                        <textarea id="justificativa{{ atividade.id }}" name="justificativa" class="form-control" required></textarea>
+                                        <button class="btn btn-warning w-100 mt-3 fw-bold"
+                                                hx-post="{% url 'alterar_status' atividade.id 'pausada' %}"
+                                                hx-include="#justificativa{{ atividade.id }}"
+                                                hx-target="#status-badge-{{ atividade.id }}"
+                                                onclick="setTimeout(()=>location.reload(), 600)">
+                                            Confirmar Pausa
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content">
+                                    {% csrf_token %}
+                                    <div class="modal-header">
+                                        <h6 class="modal-title">Editar Equipe</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <select name="tecnicos" class="form-select" multiple style="height: 150px;">
+                                            {% for t in tecnicos %}
+                                                <option value="{{ t.id }}" {% if t in atividade.colaboradores.all %}selected{% endif %}>
+                                                    {{ t.first_name|default:t.username }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted d-block mt-2">Segure CTRL para selecionar múltiplos.</small>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary w-100">Salvar Alterações</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="card overflow-hidden opacity-75 shadow-sm border-0 mb-5">
-            <div class="card-header bg-light py-3">
-                <h6 class="mb-0 fw-bold text-muted small text-uppercase"><i class="fas fa-history me-2"></i>Concluídas Recentemente</h6>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead class="table-light">
-                        <tr class="small text-muted" style="font-size: 0.7rem;">
-                            <th class="ps-4">MÁQUINA</th>
-                            <th>ATIVIDADE</th>
-                            <th>EXECUTADO POR</th>
-                            <th class="text-center">TEMPO REAL</th>
-                            <th class="text-center">STATUS</th>
-                        </tr>
+        <div class="mt-5 text-center">
+            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#historicoCollapse">
+                <i class="fas fa-history me-2"></i>Ver Histórico de Concluídas
+            </button>
+        </div>
+        <div class="collapse mt-3 mb-5" id="historicoCollapse">
+            <div class="card card-body bg-light border-0">
+                <table class="table table-sm text-muted mb-0">
+                    <thead>
+                        <tr><th>Máquina</th><th>Descrição</th><th>Técnicos</th><th>Data Fim</th></tr>
                     </thead>
                     <tbody>
                         {% for atividade in atividades_concluidas %}
-                        <tr class="bg-white">
-                            <td class="ps-4 fw-bold text-muted">{{ atividade.maquina.codigo }}</td>
-                            <td>
-                                <div class="text-muted">{{ atividade.descricao }}</div>
-                                <small class="text-muted" style="font-size: 0.65rem;">Finalizado em: {{ atividade.fim_calculado|date:"d/m H:i" }}</small>
-                            </td>
-                            <td>
-                                <small>
-                                    {% for colab in atividade.colaboradores.all %}
-                                        {{ colab.first_name|default:colab.username }}{% if not forloop.last %}, {% endif %}
-                                    {% empty %}---{% endfor %}
-                                </small>
-                            </td>
-                            <td class="text-center font-monospace fw-bold text-primary">{{ atividade.tempo_decimal|floatformat:2 }}h</td>
-                            <td class="text-center"><span class="badge bg-primary-subtle text-primary border-0">CONCLUÍDO</span></td>
+                        <tr>
+                            <td>{{ atividade.maquina.codigo }}</td>
+                            <td>{{ atividade.descricao }}</td>
+                            <td>{{ atividade.colaboradores.all|join:", " }}</td>
+                            <td>{{ atividade.fim_calculado|date:"d/m/Y H:i" }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -257,106 +408,59 @@
         </div>
     </div>
 
-    {% for atividade in atividades %}
-    <div class="modal fade" id="modalTecnicos{{ atividade.id }}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <form action="{% url 'atribuir_tecnicos' atividade.id %}" method="post" class="modal-content border-0 shadow">
-                {% csrf_token %}
-                <div class="modal-header bg-primary text-white">
-                    <h6 class="modal-title fw-bold">EDITAR EQUIPE - OS #{{ atividade.id }}</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <label class="section-label">Selecione o(s) Técnico(s) (Segure CTRL para +1)</label>
-                    <select name="tecnicos" class="form-select" multiple required style="height: 150px;">
-                        {% for t in tecnicos %}
-                            <option value="{{ t.id }}" {% if t in atividade.colaboradores.all %}selected{% endif %}>
-                                {{ t.first_name|default:t.username }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <small class="text-muted mt-2 d-block">Dica: Selecione novamente todos os técnicos que trabalharão nesta tarefa.</small>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Voltar</button>
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">Salvar Equipe</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modalPausa{{ atividade.id }}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-warning text-dark">
-                    <h6 class="modal-title fw-bold">JUSTIFICAR PAUSA - OS #{{ atividade.id }}</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <label class="section-label">Motivo da Pausa (Obrigatório)</label>
-                    <textarea id="justificativa{{ atividade.id }}" name="justificativa{{ atividade.id }}" class="form-control" rows="3" required placeholder="Ex: Aguardando peça, troca de turno..."></textarea>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Voltar</button>
-                        <button type="button" class="btn btn-warning w-100 fw-bold" 
-                                hx-post="{% url 'alterar_status' atividade.id 'pausada' %}"
-                                hx-include="#justificativa{{ atividade.id }}"
-                                hx-target="#status-badge-{{ atividade.id }}"
-                                onclick="setTimeout(()=>location.reload(), 600)">
-                            Confirmar Pausa
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-
     <div class="modal fade" id="modalAtividade" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-dark text-white">
-                    <h6 class="modal-title fw-bold">AGENDAR NOVA ATIVIDADE (OS)</h6>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold">Nova Ordem de Serviço</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="post">
                     {% csrf_token %}
                     <div class="modal-body p-4">
-                        <div class="mb-3">
-                            <label class="section-label text-primary">Equipamento / Máquina</label>
-                            {{ form.maquina }}
-                        </div>
-                        <div class="form-check form-switch mb-3 p-3 bg-light rounded border">
-                            {{ form.eh_preventiva }}
-                            <label class="form-check-label fw-bold text-primary" for="checkPreventiva">É uma Manutenção Preventiva?</label>
-                        </div>
-                        <div id="sectionPreventiva" class="mb-3 d-none border-start border-info border-4 ps-3 py-2 bg-info bg-opacity-10 rounded">
-                            <label class="section-label">Selecione o Procedimento Padrão</label>
-                            {{ form.procedimento_base }}
-                        </div>
-                        <div id="sectionDescricao" class="mb-3">
-                            <label class="section-label">Descrição Manual da Atividade</label>
-                            {{ form.descricao }}
-                        </div>
                         <div class="row g-3">
-                            <div class="col-12">
-                                <label class="section-label">Início Planejado</label>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Máquina</label>
+                                {{ form.maquina }} 
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Data Planejada</label>
                                 {{ form.data_planejada }}
                             </div>
                             <div class="col-12">
-                                <label class="section-label">Responsáveis Técnicos (CTRL para vários)</label>
-                                {{ form.colaboradores }} 
+                                <div class="form-check form-switch bg-light p-3 rounded">
+                                    {{ form.eh_preventiva }}
+                                    <label class="form-check-label ms-2" for="checkPreventiva">É Manutenção Preventiva?</label>
+                                </div>
+                            </div>
+                            <div id="sectionPreventiva" class="col-12 d-none">
+                                <label class="form-label text-primary fw-bold">Procedimento Padrão</label>
+                                {{ form.procedimento_base }}
+                            </div>
+                            <div id="sectionDescricao" class="col-12">
+                                <label class="form-label">Descrição da Atividade</label>
+                                {{ form.descricao }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Técnicos Responsáveis</label>
+                                {{ form.colaboradores }}
                             </div>
                             <div id="sectionTempo" class="col-12">
-                                <label class="section-label">Duração Estimada</label>
-                                <div class="row g-2">
-                                    <div class="col-6">{{ form.tempo_valor }}</div>
-                                    <div class="col-6">{{ form.tempo_unidade }}</div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label">Tempo Estimado</label>
+                                        {{ form.tempo_valor }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Unidade</label>
+                                        {{ form.tempo_unidade }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0 text-center d-block p-3">
-                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">GERAR ORDEM DE SERVIÇO</button>
+                    <div class="modal-footer bg-light">
+                        <button type="submit" class="btn btn-primary px-4">Gerar OS</button>
                     </div>
                 </form>
             </div>
@@ -365,8 +469,27 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Lógica do Filtro Dinâmico
+        function filtrarTabela() {
+            const filtro = document.getElementById('filtroTecnico').value;
+            const linhas = document.querySelectorAll('.linha-tarefa');
+
+            linhas.forEach(linha => {
+                const techsDaLinha = linha.getAttribute('data-tech-ids');
+                
+                if (filtro === 'todos') {
+                    linha.style.display = '';
+                } else if (techsDaLinha.includes(filtro)) {
+                    linha.style.display = '';
+                } else {
+                    linha.style.display = 'none';
+                }
+            });
+        }
+
+        // Lógica do Checkbox Preventiva
         document.addEventListener('DOMContentLoaded', function() {
-            const check = document.getElementById('checkPreventiva');
+            const check = document.getElementById('id_eh_preventiva') || document.querySelector('input[name="eh_preventiva"]');
             const sectionPrev = document.getElementById('sectionPreventiva');
             const sectionDesc = document.getElementById('sectionDescricao');
             const sectionTempo = document.getElementById('sectionTempo');
