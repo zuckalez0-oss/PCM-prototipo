@@ -2,6 +2,11 @@ from django import forms
 from .models import Atividade, ProcedimentoPreventivo
 from django.contrib.auth.models import User
 
+from .models import Atividade, PlanoPreventivo
+
+
+
+
 class AtividadeForm(forms.ModelForm):
     # Campos extras para cálculo de tempo
     tempo_valor = forms.IntegerField(
@@ -53,3 +58,16 @@ class AtividadeForm(forms.ModelForm):
         self.fields['descricao'].required = False
         # Define o rótulo amigável para o campo de múltiplos técnicos
         self.fields['colaboradores'].label = "Técnicos Responsáveis (Segure Ctrl para selecionar vários)"
+
+
+    class PlanoPreventivoForm(forms.ModelForm):
+        class Meta:
+            model = PlanoPreventivo
+            fields = ['nome', 'maquina', 'frequencia_dias', 'proxima_data', 'procedimento_padrao']
+            widgets = {
+                'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Lubrificação Quinzenal'}),
+                'maquina': forms.Select(attrs={'class': 'form-select'}),
+                'frequencia_dias': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Dias'}),
+                'proxima_data': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+                'procedimento_padrao': forms.Select(attrs={'class': 'form-select'}),
+        }    

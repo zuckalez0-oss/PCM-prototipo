@@ -14,7 +14,7 @@ from django.db.models import Count, Q
 from .models import Atividade, AtividadeLog, Maquina, Chamado, PlanoPreventivo
 from .forms import AtividadeForm
 from .utils import sequenciar_atividades
-
+from .forms import AtividadeForm, PlanoPreventivoForm 
 # --- ROBÔ (Mantido igual) ---
 def verificar_e_gerar_preventivas():
     hoje = timezone.now().date()
@@ -96,50 +96,60 @@ def dados_gantt(request):
 
 @login_required
 def dashboard_analitico(request):
-    novas_ops = verificar_e_gerar_preventivas()
-    if novas_ops > 0:
-        messages.info(request, f"{novas_ops} preventivas geradas.")
+    # 1. Roda o Robô
+    novas = verificar_e_gerar_preventivas()
+    if novas: messages.info(request, f"{novas} preventivas geradas.")
+
+    # 2. Processamento dos Formulários (Nova Tarefa OU Novo Plano)
+    form_atividade = AtividadeForm(prefix='atividade')
+    form_plano = PlanoPreventivoForm(prefix='plano')
 
     if request.method == 'POST':
-        form = AtividadeForm(request.POST)
-        if form.is_valid():
-            atividade = form.save(commit=False)
-            valor = int(form.cleaned_data.get('tempo_valor', 0)) 
-            unidade = form.cleaned_data.get('tempo_unidade', 'horas')
-            
-            if unidade == 'dias': atividade.duracao_estimada = timedelta(days=valor)
-            else: atividade.duracao_estimada = timedelta(hours=valor)
+        # Verifica qual formulário foi enviado pelo nome do botão
+        if 'btn_nova_atividade' in request.POST:
+            form_atividade = AtividadeForm(request.POST, prefix='atividade')
+            if form_atividade.is_valid():
+                act = form_atividade.save(commit=False)
+                # Lógica de tempo (dias/horas)
+                valor = int(form_atividade.cleaned_data.get('tempo_valor', 0))
+                unidade = form_atividade.cleaned_data.get('tempo_unidade', 'horas')
+                if unidade == 'dias': act.duracao_estimada = timedelta(days=valor)
+                else: act.duracao_estimada = timedelta(hours=valor)
+                
+                if act.eh_preventiva and act.procedimento_base:
+                    act.descricao = f"PREV: {act.procedimento_base.nome}"
+                
+                act.save()
+                form_atividade.save_m2m()
+                messages.success(request, "Nova OS criada!")
+                return redirect('dashboard_analitico')
 
-            if atividade.eh_preventiva and atividade.procedimento_base:
-                atividade.descricao = f"PREVENTIVA: {atividade.procedimento_base.nome}"
-                atividade.duracao_estimada = atividade.procedimento_base.duracao_estimada_padrao
-            
-            atividade.save()
-            form.save_m2m()
-            messages.success(request, "Atividade agendada!")
-            return redirect('dashboard_analitico')
-    else:
-        form = AtividadeForm()
+        elif 'btn_novo_plano' in request.POST:
+            form_plano = PlanoPreventivoForm(request.POST, prefix='plano')
+            if form_plano.is_valid():
+                form_plano.save()
+                messages.success(request, "Novo Plano Preventivo cadastrado!")
+                return redirect('dashboard_analitico')
 
-    quebras_por_maquina = Atividade.objects.filter(eh_preventiva=False).values('maquina__codigo').annotate(total=Count('id')).order_by('-total')[:5]
-    labels_quebra = [item['maquina__codigo'] for item in quebras_por_maquina]
-    data_quebra = [item['total'] for item in quebras_por_maquina]
-    
-    # --- CORREÇÃO AQUI: Ordenação e select_related para a lista lateral ---
-    # Mostra os próximos 15 planos para garantir que o dia 20 apareça
-    planos_futuros = PlanoPreventivo.objects.filter(ativo=True).select_related('maquina').order_by('proxima_data')[:15]
+    # 3. Dados dos Gráficos e Sidebar
+    quebras = Atividade.objects.filter(eh_preventiva=False).values('maquina__codigo').annotate(total=Count('id')).order_by('-total')[:5]
+    labels_quebra = [q['maquina__codigo'] for q in quebras]
+    data_quebra = [q['total'] for q in quebras]
+
+    # Lista de Planos Ativos
+    planos_futuros = PlanoPreventivo.objects.filter(ativo=True).select_related('maquina').order_by('proxima_data')
     
     tecnicos = User.objects.all()
 
-    context = {
+    return render(request, 'assets/dashboard_completo.html', {
         'labels_quebra': labels_quebra,
         'data_quebra': data_quebra,
         'planos_futuros': planos_futuros,
-        'form': form,      
-        'tecnicos': tecnicos
-    }
-    
-    return render(request, 'assets/dashboard_completo.html', context)
+        'form_atividade': form_atividade,
+        'form_plano': form_plano, # Passamos o novo form para o template
+        'tecnicos': tecnicos,
+        'today': timezone.now().date()
+    })
 
 @login_required
 def lista_atividades(request):

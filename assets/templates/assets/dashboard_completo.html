@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LYPSYOS | PCM Dashboard</title>
-    
+    <title>LYPSYOS | Cronograma</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
 
     <style>
-        /* MANTENDO O MESMO DESIGN DA LISTA */
         :root {
             --primary-bg: #f8fafc;
-            --sidebar-bg: #0f172a; /* Azul Escuro Original */
+            --sidebar-bg: #0f172a; /* MANTIDO O AZUL ESCURO */
             --card-bg: #ffffff;
             --brand-color: #0ea5e9;
             --text-main: #334155;
@@ -25,31 +23,31 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--primary-bg); color: var(--text-main); overflow-x: hidden; }
         .dashboard-wrapper { display: flex; height: 100vh; }
 
-        /* Sidebar Escura (Igual Lista) */
+        /* Sidebar Escura Igual a Lista */
         .analytics-sidebar {
             width: 300px; background-color: var(--sidebar-bg); color: #fff;
             border-right: 1px solid var(--sidebar-bg);
             padding: 24px; overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 2rem; z-index: 100;
         }
         .analytics-sidebar .text-muted { color: #94a3b8 !important; }
-        .analytics-sidebar .fw-bold.text-dark { color: #fff !important; } /* Inverte cor do texto */
+        .analytics-sidebar .fw-bold.text-dark { color: #fff !important; } 
         .section-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 5px; }
 
         /* Conteúdo */
         .gantt-area { flex-grow: 1; padding: 24px; overflow-y: auto; background: var(--primary-bg); display: flex; flex-direction: column; }
         
-        /* Navbar Branca */
         .navbar-glass { 
             background: white; border: 1px solid var(--border-color); border-radius: 12px; 
             padding: 12px 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
 
-        /* Gantt Custom */
         .gantt-wrapper { 
             background: white; border-radius: 12px; border: 1px solid var(--border-color); 
             overflow: hidden; min-height: 500px; flex-grow: 1; position: relative;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
+        /* Cores Gantt */
         .gantt-status-aberta .bar { fill: #cbd5e1; }
         .gantt-status-executando .bar { fill: #22c55e; }
         .gantt-status-pausada .bar { fill: #eab308; }
@@ -86,7 +84,13 @@
         </div>
 
         <div>
-            <div class="section-title">Agenda Preventiva</div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="section-title mb-0">Agenda Preventiva</div>
+                <button class="btn btn-sm btn-outline-info py-0" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#modalNovoPlano">
+                    <i class="fas fa-plus"></i> Novo Plano
+                </button>
+            </div>
+            
             <ul class="list-group list-group-flush small">
                 {% for plano in planos_futuros %}
                 <li class="list-group-item list-group-item-dark px-0 d-flex justify-content-between align-items-center bg-transparent">
@@ -151,60 +155,44 @@
     </main>
 </div>
 
-<div class="modal fade" id="modalDetalhesGantt" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-bottom-0 bg-light">
-                <div>
-                    <h6 class="modal-title fw-bold" id="detalheTitulo">Detalhes da OS</h6>
-                    <div class="small text-muted" id="detalheMaquina">-</div>
-                </div>
+<div class="modal fade" id="modalNovoPlano" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-dark">
+                <h6 class="modal-title fw-bold">Cadastrar Plano Preventivo</h6>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-7 border-end">
-                        <label class="small text-muted fw-bold">DESCRIÇÃO</label>
-                        <p id="detalheDescricao" class="mb-3">-</p>
-
-                        <label class="small text-muted fw-bold">EQUIPE</label>
-                        <div id="detalheTecnicos" class="d-flex flex-wrap gap-2 fw-bold text-dark mb-3">-</div>
-                        
-                        <label class="small text-muted fw-bold">STATUS ATUAL</label>
-                        <div id="detalheStatus" class="mb-3">-</div>
-                        
-                        <div class="d-grid gap-2 d-md-flex mt-4">
-                            <button class="btn btn-outline-primary btn-sm flex-fill" onclick="abrirModalEdicao()">
-                                <i class="fas fa-users-cog me-2"></i>Equipe
-                            </button>
-                            <button id="btnPausar" class="btn btn-outline-warning btn-sm flex-fill" onclick="abrirModalPausa()">
-                                <i class="fas fa-pause me-2"></i>Pausar
-                            </button>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p class="small text-muted mb-3">Defina a recorrência para que o sistema gere as OS automaticamente.</p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nome do Plano</label>
+                        {{ form_plano.nome }}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Máquina</label>
+                            {{ form_plano.maquina }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Procedimento (Opcional)</label>
+                            {{ form_plano.procedimento_padrao }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Frequência (Dias)</label>
+                            {{ form_plano.frequencia_dias }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Próxima Data</label>
+                            {{ form_plano.proxima_data }}
                         </div>
                     </div>
-                    
-                    <div class="col-md-5 bg-light rounded p-3">
-                        <h6 class="small fw-bold text-muted mb-3"><i class="fas fa-history me-2"></i>HISTÓRICO RECENTE</h6>
-                        <div id="timelineContainer" style="max-height: 250px; overflow-y: auto;">
-                            </div>
-                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalPausaGantt" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-warning text-dark"><h6 class="modal-title fw-bold">Pausar Atividade</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-                <label class="form-label small fw-bold">Motivo da Pausa</label>
-                <textarea id="textoJustificativa" class="form-control" rows="3" placeholder="Ex: Aguardando peças..."></textarea>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-warning w-100 fw-bold" onclick="confirmarPausa()">Confirmar Pausa</button>
-            </div>
+                <div class="modal-footer">
+                    <button type="submit" name="btn_novo_plano" class="btn btn-info fw-bold w-100">Salvar Plano</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -216,39 +204,35 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label small fw-bold">Máquina</label>{{ form.maquina }}</div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Início</label>{{ form.data_planejada }}</div>
-                        <div class="col-12"><div class="form-check form-switch bg-light p-3 rounded border">{{ form.eh_preventiva }}<label class="form-check-label ms-2 fw-bold" for="checkPreventiva">Manutenção Preventiva?</label></div></div>
-                        <div id="sectionPreventiva" class="col-12 d-none"><label class="form-label text-primary fw-bold">Procedimento</label>{{ form.procedimento_base }}</div>
-                        <div id="sectionDescricao" class="col-12"><label class="form-label small fw-bold">Descrição</label>{{ form.descricao }}</div>
-                        <div class="col-12"><label class="form-label small fw-bold">Técnicos</label>{{ form.colaboradores }}</div>
-                        <div id="sectionTempo" class="col-12"><div class="row"><div class="col-6"><label class="form-label small fw-bold">Tempo</label>{{ form.tempo_valor }}</div><div class="col-6"><label class="form-label small fw-bold">Unidade</label>{{ form.tempo_unidade }}</div></div></div>
-                    </div>
+                    {{ form_atividade.as_p }}
                 </div>
-                <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
+                <div class="modal-footer"><button type="submit" name="btn_nova_atividade" class="btn btn-primary w-100">Salvar</button></div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalEditarEquipe" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <form id="formEditarEquipe" method="post" action="" class="modal-content border-0 shadow">
-            {% csrf_token %}
-            <div class="modal-header bg-dark text-white"><h6 class="modal-title fw-bold">Atribuir Técnicos</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+<div class="modal fade" id="modalDetalhesGantt" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 bg-light">
+                <div><h6 class="modal-title fw-bold" id="detalheTitulo">Detalhes</h6><div class="small text-muted" id="detalheMaquina">-</div></div>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
-                <div class="list-group">
-                    {% for t in tecnicos %}
-                    <label class="list-group-item d-flex gap-3">
-                        <input class="form-check-input flex-shrink-0" type="checkbox" name="tecnicos" value="{{ t.id }}" id="chk_tec_{{ t.id }}">
-                        <span>{{ t.first_name|default:t.username }}</span>
-                    </label>
-                    {% endfor %}
+                <div class="row">
+                    <div class="col-md-7 border-end">
+                        <label class="small text-muted fw-bold">DESCRIÇÃO</label><p id="detalheDescricao" class="mb-3">-</p>
+                        <label class="small text-muted fw-bold">STATUS</label><div id="detalheStatus" class="mb-3">-</div>
+                        <label class="small text-muted fw-bold">EQUIPE</label><div id="detalheTecnicos" class="fw-bold">-</div>
+                    </div>
+                    <div class="col-md-5 bg-light rounded p-3">
+                        <h6 class="small fw-bold text-muted mb-3"><i class="fas fa-history me-2"></i>HISTÓRICO</h6>
+                        <div id="timelineContainer" style="max-height: 250px; overflow-y: auto;"></div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -262,16 +246,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    let gantt_chart; let todasTarefas = []; let tarefaAtualId = null;
+    let gantt_chart; let todasTarefas = [];
 
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('chartQuebras').getContext('2d');
         const labels = JSON.parse(document.getElementById('dados-labels').textContent);
         const data = JSON.parse(document.getElementById('dados-valores').textContent);
         if(labels && labels.length > 0) new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ data: data, backgroundColor: '#0ea5e9', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
-        
-        const check = document.getElementById('id_eh_preventiva');
-        if(check){ check.addEventListener('change', function() { document.getElementById('sectionPreventiva').classList.toggle('d-none'); document.getElementById('sectionDescricao').classList.toggle('d-none'); document.getElementById('sectionTempo').classList.toggle('d-none'); }); }
     });
 
     async function initGantt() {
@@ -288,7 +269,7 @@
     function renderGantt(tasks) {
         const wrapper = document.getElementById('gantt-chart-wrapper');
         wrapper.innerHTML = '<svg id="gantt-target"></svg>';
-        if (!tasks || tasks.length === 0) { wrapper.innerHTML = `<div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted"><i class="fas fa-filter fa-2x mb-3 opacity-25"></i><p>Nenhuma tarefa neste filtro.</p></div>`; return; }
+        if (!tasks || tasks.length === 0) { wrapper.innerHTML = `<div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted"><p>Nenhuma tarefa.</p></div>`; return; }
         gantt_chart = new Gantt("#gantt-target", tasks, {
             view_mode: 'Day', column_width: 30, bar_height: 25, padding: 18, date_format: 'YYYY-MM-DD', language: 'ptBr',
             on_click: task => abrirDetalhes(task)
@@ -298,75 +279,27 @@
     function changeView(mode) { if(gantt_chart) gantt_chart.change_view_mode(mode); }
 
     function abrirDetalhes(task) {
-        tarefaAtualId = task.id;
         document.getElementById('detalheTitulo').innerText = task.full_name;
         document.getElementById('detalheMaquina').innerText = task.maquina;
         document.getElementById('detalheDescricao').innerText = task.description;
         document.getElementById('detalheTecnicos').innerText = task.tech_names || "Sem técnicos";
+        document.getElementById('detalheStatus').innerHTML = `<span class="badge bg-secondary text-uppercase">${task.status}</span>`;
         
-        // Status e Motivo Pausa
-        let statusHtml = `<span class="badge bg-secondary text-uppercase">${task.status}</span>`;
-        if(task.status === 'pausada' && task.motivo_pausa) {
-            statusHtml += `<div class="mt-2 small text-warning"><i class="fas fa-exclamation-triangle me-1"></i>${task.motivo_pausa}</div>`;
-        }
-        document.getElementById('detalheStatus').innerHTML = statusHtml;
-
-        // --- RENDERIZAR HISTÓRICO ---
         const tlContainer = document.getElementById('timelineContainer');
         if(task.logs && task.logs.length > 0) {
             let html = '<ul class="timeline">';
             task.logs.forEach(log => {
-                html += `
-                <li class="timeline-item">
-                    <div class="timeline-date">${log.data} - ${log.usuario}</div>
-                    <div class="timeline-content">${log.descricao}</div>
-                </li>`;
+                html += `<li class="timeline-item"><div class="timeline-date">${log.data} - ${log.usuario}</div><div class="timeline-content">${log.descricao}</div></li>`;
             });
             html += '</ul>';
             tlContainer.innerHTML = html;
         } else {
             tlContainer.innerHTML = '<p class="text-muted small text-center mt-4">Sem registros.</p>';
         }
-
-        // Esconder botão pausa se já finalizada
-        const btnPausa = document.getElementById('btnPausar');
-        if(task.status === 'finalizada' || task.status === 'pausada') btnPausa.style.display = 'none';
-        else btnPausa.style.display = 'block';
-
-        const modal = new bootstrap.Modal(document.getElementById('modalDetalhesGantt'));
-        modal.show();
-    }
-
-    function abrirModalEdicao() {
-        if(!tarefaAtualId) return;
-        bootstrap.Modal.getInstance(document.getElementById('modalDetalhesGantt')).hide();
-        const form = document.getElementById('formEditarEquipe');
-        form.action = "{% url 'atribuir_tecnicos' 0 %}".replace('0', tarefaAtualId);
-        new bootstrap.Modal(document.getElementById('modalEditarEquipe')).show();
-    }
-
-    function abrirModalPausa() {
-        bootstrap.Modal.getInstance(document.getElementById('modalDetalhesGantt')).hide();
-        document.getElementById('textoJustificativa').value = ''; // Limpa
-        new bootstrap.Modal(document.getElementById('modalPausaGantt')).show();
-    }
-
-    function confirmarPausa() {
-        const justificativa = document.getElementById('textoJustificativa').value;
-        if(!justificativa) { alert("Digite o motivo da pausa."); return; }
         
-        // Envia via fetch para a URL alterar_status
-        const url = "{% url 'alterar_status' 0 'pausada' %}".replace('0', tarefaAtualId);
-        const formData = new FormData();
-        formData.append('justificativa', justificativa);
-        
-        fetch(url, { method: 'POST', body: formData, headers: {'X-CSRFToken': '{{ csrf_token }}'} })
-        .then(res => {
-            if(res.ok) location.reload();
-            else alert("Erro ao pausar.");
-        });
+        new bootstrap.Modal(document.getElementById('modalDetalhesGantt')).show();
     }
-
+    
     window.onload = initGantt;
 </script>
 </body>
