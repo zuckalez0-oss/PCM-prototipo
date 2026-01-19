@@ -21,6 +21,7 @@ DEBUG = os.getenv('DEBUG') == 'True'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -30,7 +31,7 @@ SECRET_KEY = 'django-insecure-sf(7dxj@9t)f(@0yr%rswu)y^&l8_z@10u*sq6keg7-jz7i4p2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['69.62.104.116','pcm.lypsyos.com','localhost','db']
+ALLOWED_HOSTS = ['69.62.104.116','pcm.lypsyos.com','localhost','db', '127.0.0.1'] # retire o 127.0.0.1 quando for para produção
 
 CSRF_TRUSTED_ORIGINS = [
     'https://pcm.lypsyos.com',
@@ -82,16 +83,26 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'pcm_db'),
-        'USER': os.getenv('DB_USER', 'pcm_user'), # Se o env falhar, ele usa pcm_user
-        'PASSWORD': os.getenv('DB_PASSWORD', 'as4590kx95'), # Coloque sua senha aqui também como garantia
-        'HOST': os.getenv('DB_HOST', 'db'), # 'db' é o nome do serviço do banco no docker-compose
-        'PORT': os.getenv('DB_PORT', '5432'),
+
+if os.environ.get('DOCKER_RUNNING'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'pcm_db'),
+            'USER': os.getenv('DB_USER', 'pcm_user'), # Se o env falhar, ele usa pcm_user
+            'PASSWORD': os.getenv('DB_PASSWORD', 'as4590kx95'), # Coloque sua senha aqui também como garantia
+            #'HOST': 'localhost', # Em vez de 'db', coloque 'localhost' # para rodar localmente sem Docker
+            'HOST': os.getenv('DB_HOST', 'db'), # 'db' é o nome do serviço do banco no docker-compose
+            'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

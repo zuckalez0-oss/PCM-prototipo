@@ -2,16 +2,26 @@ from datetime import timedelta
 from django.utils import timezone
 
 def formatar_duracao(td):
-    """Converte timedelta para uma string amigável (ex: 2d 4h ou 5h)"""
-    if not td:
-        return "0h"
+    """Converte timedelta para uma string amigável (ex: 2d 4h 5m ou 5h 30m)"""
+    if not td or td.total_seconds() == 0:
+        return "0m"
     
-    dias = td.days
-    horas = td.seconds // 3600
+    total_seconds = int(td.total_seconds())
+    days = total_seconds // (24 * 3600)
+    total_seconds = total_seconds % (24 * 3600)
+    hours = total_seconds // 3600
+    total_seconds = total_seconds % 3600
+    minutes = total_seconds // 60
     
-    if dias > 0:
-        return f"{dias}d {horas}h" if horas > 0 else f"{dias}d"
-    return f"{horas}h"
+    parts = []
+    if days > 0:
+        parts.append(f"{days}d")
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0 or not parts:
+        parts.append(f"{minutes}m")
+        
+    return " ".join(parts)
 
 def sequenciar_atividades(atividades_queryset):
     """
@@ -32,6 +42,8 @@ def sequenciar_atividades(atividades_queryset):
             act.tempo_decimal = round(total_segundos / 3600, 2)
         else:
             act.tempo_decimal = 0.00
+        
+        act.tempo_gasto_formatado = formatar_duracao(act.tempo_total_gasto)
 
         # --- SEGURANÇA DE DADOS ---
         data_base = act.data_planejada if act.data_planejada else timezone.now()

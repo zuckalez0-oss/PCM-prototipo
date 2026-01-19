@@ -244,7 +244,9 @@
                         <tr class="linha-tarefa" data-tech-ids="{% for c in atividade.colaboradores.all %}{{ c.id }},{% endfor %}">
                             <td class="ps-4 fw-bold text-muted">#{{ atividade.id }}</td>
                             <td>
-                                <div class="fw-bold">{{ atividade.maquina.codigo }}</div>
+                                <div class="fw-bold">Código: {{ atividade.maquina.codigo }}</div>
+                                <div class="fw-bold">{{ atividade.maquina.nome }}</div>
+                                
                                 <div class="small text-muted">{{ atividade.descricao }}</div>
                                 <button class="btn btn-link btn-sm p-0 text-decoration-none mt-1" data-bs-toggle="modal" data-bs-target="#modalDetalhes{{ atividade.id }}">
                                     <i class="fas fa-info-circle text-info"></i> <span class="small fw-bold">Ver Histórico</span>
@@ -362,34 +364,38 @@
         <div class="collapse mt-3 mb-5" id="historicoCollapse">
             <div class="card card-body border-0 shadow-sm">
                 <table class="table table-sm text-muted mb-0 align-middle">
-                    <thead><tr><th>Tipo</th><th>Máquina</th><th>Descrição / Motivo</th><th>Status</th><th>Data</th></tr></thead>
+                    <thead><tr><th>Tipo</th><th>Máquina</th><th>Descrição / Motivo</th><th>Status</th><th>Data</th><th>Tempo Total</th></tr></thead>
                     <tbody>
                         {% for item in historico_unificado %}
                             {% if item.prioridade_indicada %} 
                                 <tr class="bg-light">
                                     <td><span class="badge bg-secondary">CHAMADO #{{ item.id }}</span></td>
-                                    <td class="fw-bold">{{ item.maquina.codigo }}</td>
+                                    <td class="fw-bold">{{ item.maquina.nome }}</td> <!-- Alterado de .codigo para .nome para pegar o atributo do nome da máquina. -->
                                     <td>
                                         <div class="text-decoration-line-through text-muted small">{{ item.descricao_problema }}</div>
                                         <div class="text-danger small fw-bold mt-1"><i class="fas fa-ban me-1"></i>Motivo: {{ item.motivo_resposta }}</div>
                                     </td>
+                                    
                                     <td><span class="badge bg-light text-secondary border">RECUSADO</span></td>
                                     <td>{{ item.data_abertura|date:"d/m/Y H:i" }}</td>
+                                    <td>-</td>
                                 </tr>
                             {% else %}
                                 <tr>
                                     <td><span class="badge bg-primary">OS #{{ item.id }}</span></td>
-                                    <td class="fw-bold">{{ item.maquina.codigo }}</td>
+                                    <td class="fw-bold">{{ item.maquina.nome }}</td>
                                     <td>
                                         <div>{{ item.descricao }}</div>
                                         <div class="small text-muted">Técnicos: {{ item.colaboradores.all|join:", " }}</div>
                                     </td>
+                                    
                                     <td><span class="badge bg-success-subtle text-success border border-success">CONCLUÍDO</span></td>
                                     <td>{{ item.fim_calculado|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ item.tempo_gasto_formatado }}</td>
                                 </tr>
                             {% endif %}
                         {% empty %}
-                            <tr><td colspan="5" class="text-center py-3">Nenhum histórico encontrado.</td></tr>
+                            <tr><td colspan="6" class="text-center py-3">Nenhum histórico encontrado.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

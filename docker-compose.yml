@@ -2,6 +2,9 @@ services:
   # Serviço do Banco de Dados
   db:
     image: postgres:15
+    ports:
+      - "5432:5432" # abrindo a porta para acesso localmente 19/01/26, remover para producao
+      
     container_name: postgres_pcm
     volumes:
       - postgres_data:/var/lib/postgresql/data

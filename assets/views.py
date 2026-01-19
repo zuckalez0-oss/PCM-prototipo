@@ -241,6 +241,13 @@ def alterar_status(request, atividade_id, novo_status):
     atividade = get_object_or_404(Atividade, id=atividade_id)
     justificativa = request.POST.get('justificativa', '')
     usuario = request.user
+    
+    agora = timezone.now()
+    if atividade.status == 'executando' and novo_status in ['pausada', 'finalizada']:
+        if atividade.ultima_interacao:
+            decorrido = agora - atividade.ultima_interacao
+            atividade.tempo_total_gasto += decorrido
+
     atividade.status = novo_status
     if novo_status == 'pausada':
         atividade.motivo_pausa = justificativa
