@@ -55,7 +55,17 @@ class Atividade(models.Model):
     
     # Realizado
     tempo_total_gasto = models.DurationField(default=timezone.timedelta(0))
+    tempo_total_pausa = models.DurationField(default=timezone.timedelta(0))
     ultima_interacao = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def duration_seconds(self):
+        total = self.tempo_total_gasto.total_seconds()
+        if self.status == 'executando' and self.ultima_interacao:
+            # Adiciona o tempo decorrido desde a última interação até agora
+            delta = (timezone.now() - self.ultima_interacao).total_seconds()
+            total += delta
+        return int(total)
 
     # Novos campos para a lógica de Preventiva
     eh_preventiva = models.BooleanField(default=False, verbose_name="É uma manutenção preventiva?")
@@ -102,6 +112,7 @@ class AtividadeLog(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     status_novo = models.CharField(max_length=20)
     descricao = models.CharField(max_length=255, blank=True, null=True) 
+    duracao = models.DurationField(null=True, blank=True)
     data_registro = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

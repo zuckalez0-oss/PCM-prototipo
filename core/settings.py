@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'assets',
 ]
 
@@ -72,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.notifications', # Global Notifications
             ],
         },
     },
@@ -91,7 +93,7 @@ if os.environ.get('DOCKER_RUNNING'):
             'NAME': os.getenv('DB_NAME', 'pcm_db'),
             'USER': os.getenv('DB_USER', 'pcm_user'), # Se o env falhar, ele usa pcm_user
             'PASSWORD': os.getenv('DB_PASSWORD', 'as4590kx95'), # Coloque sua senha aqui também como garantia
-            #'HOST': 'localhost', # Em vez de 'db', coloque 'localhost' # para rodar localmente sem Docker
+            'HOST': 'localhost', # Em vez de 'db', coloque 'localhost' # para rodar localmente sem Docker
             'HOST': os.getenv('DB_HOST', 'db'), # 'db' é o nome do serviço do banco no docker-compose
             'PORT': os.getenv('DB_PORT', '5432'),
     }
@@ -155,7 +157,6 @@ STATIC_URL = '/static/'
 # os arquivos do Admin e futuros arquivos que você criar.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
-
-# Depois de deslogar, vá para a página de login de novo
 LOGOUT_REDIRECT_URL = '/accounts/login/'

@@ -1,0 +1,86 @@
+<!-- Modal Edit Technician -->
+<div x-show="showEditTechModal" x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    @click.self="showEditTechModal = false" style="display: none;">
+
+    <div x-show="showEditTechModal" x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center">
+                    <i class="ph-bold ph-user-gear text-brand-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-800">Editar Técnico</h3>
+                    <p class="text-xs text-slate-500">OS #{{ atividade.id }}</p>
+                </div>
+            </div>
+            <button @click="showEditTechModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form hx-post="{% url 'atribuir_tecnicos' atividade.id %}" hx-target="#kanban-container" hx-swap="innerHTML"
+            class="p-6">
+            {% csrf_token %}
+
+            <!-- Current Technicians -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                    Técnicos Atuais
+                </label>
+                <div class="flex flex-wrap gap-2">
+                    {% for tecnico in atividade.colaboradores.all %}
+                    <span
+                        class="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-md text-xs">
+                        <i class="ph-fill ph-user"></i>
+                        {{ tecnico.username }}
+                    </span>
+                    {% empty %}
+                    <span class="text-xs text-slate-400 italic">Nenhum técnico atribuído</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Select New Technicians -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                    Selecionar Novos Técnicos
+                </label>
+                <select name="tecnicos" multiple
+                    class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                    {% for tecnico in tecnicos %}
+                    <option value="{{ tecnico.id }}" {% if tecnico in atividade.colaboradores.all %}selected{% endif %}>
+                        {{ tecnico.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-xs text-slate-500">
+                    <i class="ph-fill ph-info"></i> Segure Ctrl/Cmd para selecionar múltiplos
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button type="button" @click="showEditTechModal = false"
+                    class="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
+                    hx-disabled-elt="this">
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

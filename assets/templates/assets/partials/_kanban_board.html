@@ -1,0 +1,104 @@
+<div class="flex overflow-x-auto h-full gap-6 pb-4 items-start">
+
+    <!-- Coluna: Triagem (Validation PCM) -->
+    <div class="min-w-[300px] w-[300px] flex flex-col bg-slate-200/50 rounded-xl border border-slate-300 max-h-full">
+        <div
+            class="p-3 border-b border-slate-300 flex justify-between items-center sticky top-0 bg-slate-200/95 backdrop-blur z-10 rounded-t-xl">
+            <h3 class="font-bold text-slate-600 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-500 animate-pulse"></span> Triagem / Validação
+            </h3>
+            <span
+                class="text-xs font-semibold bg-white border border-slate-300 px-2 py-0.5 rounded-full text-slate-600">
+                {{ chamados_pendentes|length }}
+            </span>
+        </div>
+        <div class="p-3 gap-3 flex flex-col overflow-y-auto custom-scrollbar">
+            {% for chamado in chamados_pendentes %}
+            {% include 'assets/partials/_kanban_chamado_card.html' with chamado=chamado %}
+            {% empty %}
+            <div class="text-center py-8 text-slate-400 text-sm italic">Nenhum chamado pendente.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Coluna: Abertas -->
+    <div class="min-w-[300px] w-[300px] flex flex-col bg-slate-100/50 rounded-xl border border-slate-200 max-h-full">
+        <div
+            class="p-3 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-slate-100/95 backdrop-blur z-10 rounded-t-xl">
+            <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Abertas
+            </h3>
+            <span
+                class="text-xs font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-500">
+                {{ abertas|length }}
+            </span>
+        </div>
+        <div class="p-3 gap-3 flex flex-col overflow-y-auto custom-scrollbar">
+            {% for atividade in abertas %}
+            {% include 'assets/partials/_kanban_card.html' with atividade=atividade %}
+            {% empty %}
+            <div class="text-center py-8 text-slate-400 text-sm italic">Nenhuma atividade aberta.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Coluna: Executando -->
+    <div class="min-w-[300px] w-[300px] flex flex-col bg-brand-50/50 rounded-xl border border-brand-100 max-h-full">
+        <div
+            class="p-3 border-b border-brand-100 flex justify-between items-center sticky top-0 bg-brand-50/95 backdrop-blur z-10 rounded-t-xl">
+            <h3 class="font-bold text-brand-700 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></span> Em Execução
+            </h3>
+            <span
+                class="text-xs font-semibold bg-white border border-brand-200 px-2 py-0.5 rounded-full text-brand-600">
+                {{ executando|length }}
+            </span>
+        </div>
+        <div class="p-3 gap-3 flex flex-col overflow-y-auto custom-scrollbar">
+            {% for atividade in executando %}
+            {% include 'assets/partials/_kanban_card.html' with atividade=atividade %}
+            {% empty %}
+            <div class="text-center py-8 text-brand-300 text-sm italic">Nada em execução.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Coluna: Pausadas -->
+    <div class="min-w-[300px] w-[300px] flex flex-col bg-amber-50/50 rounded-xl border border-amber-100 max-h-full">
+        <div
+            class="p-3 border-b border-amber-100 flex justify-between items-center sticky top-0 bg-amber-50/95 backdrop-blur z-10 rounded-t-xl">
+            <h3 class="font-bold text-amber-700 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Pausadas
+            </h3>
+            <span
+                class="text-xs font-semibold bg-white border border-amber-200 px-2 py-0.5 rounded-full text-amber-600">
+                {{ pausadas|length }}
+            </span>
+        </div>
+        <div class="p-3 gap-3 flex flex-col overflow-y-auto custom-scrollbar">
+            {% for atividade in pausadas %}
+            {% include 'assets/partials/_kanban_card.html' with atividade=atividade %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Coluna: Concluídas -->
+    <div
+        class="min-w-[300px] w-[300px] flex flex-col bg-slate-100/50 rounded-xl border border-slate-200 max-h-full opacity-75 hover:opacity-100 transition-opacity">
+        <div
+            class="p-3 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-slate-100/95 backdrop-blur z-10 rounded-t-xl">
+            <h3 class="font-bold text-slate-600 text-sm flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Concluídas (Recentes)
+            </h3>
+            <span
+                class="text-xs font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-500">
+                {{ concluidas|length }}
+            </span>
+        </div>
+        <div class="p-3 gap-3 flex flex-col overflow-y-auto custom-scrollbar">
+            {% for atividade in concluidas %}
+            {% include 'assets/partials/_kanban_card.html' with atividade=atividade %}
+            {% endfor %}
+        </div>
+    </div>
+</div>

@@ -1,306 +1,601 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LYPSYOS | Cronograma</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
 
-    <style>
-        :root {
-            --primary-bg: #f8fafc;
-            --sidebar-bg: #0f172a; /* MANTIDO O AZUL ESCURO */
-            --card-bg: #ffffff;
-            --brand-color: #0ea5e9;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-        }
+{% block title %}Dashboard | LYPSYOS{% endblock %}
+{% block page_title %}Visão Geral{% endblock %}
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--primary-bg); color: var(--text-main); overflow-x: hidden; }
-        .dashboard-wrapper { display: flex; height: 100vh; }
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+<style>
+    /* Cores Gantt Modernas */
+    .gantt-status-aberta .bar {
+        fill: #cbd5e1;
+    }
 
-        /* Sidebar Escura Igual a Lista */
-        .analytics-sidebar {
-            width: 300px; background-color: var(--sidebar-bg); color: #fff;
-            border-right: 1px solid var(--sidebar-bg);
-            padding: 24px; overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 2rem; z-index: 100;
-        }
-        .analytics-sidebar .text-muted { color: #94a3b8 !important; }
-        .analytics-sidebar .fw-bold.text-dark { color: #fff !important; } 
-        .section-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 1rem; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+    /* Slate 300 */
+    .gantt-status-executando .bar {
+        fill: #22c55e;
+    }
 
-        /* Conteúdo */
-        .gantt-area { flex-grow: 1; padding: 24px; overflow-y: auto; background: var(--primary-bg); display: flex; flex-direction: column; }
-        
-        .navbar-glass { 
-            background: white; border: 1px solid var(--border-color); border-radius: 12px; 
-            padding: 12px 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
+    /* Green 500 */
+    .gantt-status-pausada .bar {
+        fill: #eab308;
+    }
 
-        .gantt-wrapper { 
-            background: white; border-radius: 12px; border: 1px solid var(--border-color); 
-            overflow: hidden; min-height: 500px; flex-grow: 1; position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+    /* Yellow 500 */
+    .gantt-status-finalizada .bar {
+        fill: #3b82f6;
+    }
 
-        /* Cores Gantt */
-        .gantt-status-aberta .bar { fill: #cbd5e1; }
-        .gantt-status-executando .bar { fill: #22c55e; }
-        .gantt-status-pausada .bar { fill: #eab308; }
-        .gantt-status-finalizada .bar { fill: #3b82f6; }
-        .gantt-atrasado .bar { fill: #ef4444 !important; }
-        .gantt .bar-label { fill: #1e293b; font-weight: 600; font-size: 12px; }
+    /* Blue 500 */
+    .gantt-atrasado .bar {
+        fill: #ef4444 !important;
+    }
 
-        /* Timeline no Modal */
-        .timeline { border-left: 2px solid #e2e8f0; padding-left: 20px; margin-left: 5px; list-style: none; margin-top: 10px; }
-        .timeline-item { position: relative; margin-bottom: 15px; }
-        .timeline-item::before { 
-            content: ''; position: absolute; left: -26px; top: 5px; 
-            width: 10px; height: 10px; border-radius: 50%; background: var(--brand-color); border: 2px solid white; box-shadow: 0 0 0 1px #e2e8f0;
-        }
-        .timeline-date { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
-        .timeline-content { font-size: 0.85rem; background: #f8fafc; padding: 6px 10px; border-radius: 6px; margin-top: 2px; }
+    /* Red 500 */
+    .gantt-status-prevista .bar {
+        fill: #94a3b8;
+        stroke: #64748b;
+        stroke-width: 1px;
+    }
 
-        .list-group-item-dark { background-color: #1e293b; border-color: #334155; color: white; }
-    </style>
-</head>
-<body>
+    /* Slate 400 (Dashed border simulation or lighter color) */
+    .gantt .bar-label {
+        fill: #334155;
+        font-weight: 600;
+        font-size: 12px;
+        font-family: 'Inter', sans-serif;
+    }
 
-<div class="dashboard-wrapper">
-    
-    <aside class="analytics-sidebar">
-        <div class="d-flex align-items-center gap-2 mb-2">
-            <div class="text-white"><i class="fas fa-microchip fa-2x"></i></div>
-            <div><h6 class="fw-bold mb-0">LYPSYOS</h6><small class="text-muted">PCM System</small></div>
+    .gantt .bar-progress {
+        fill: rgba(0, 0, 0, 0.1);
+    }
+
+    .gantt-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #gantt-target .grid-header {
+        fill: #f8fafc;
+        stroke: #e2e8f0;
+    }
+
+    #gantt-target .grid-row {
+        fill: #fff;
+    }
+
+    #gantt-target .grid-row:nth-child(even) {
+        fill: #f8fafc;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full pb-10">
+
+    <!-- Coluna Esquerda: Indicadores e Lista (1/4) -->
+    <div class="lg:col-span-1 flex flex-col gap-6">
+
+        <!-- Chart Card -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
+                Indicador de Quebras</h3>
+            <div class="h-40">
+                <canvas id="chartQuebras"></canvas>
+            </div>
+            <!-- Decorative circle -->
+            <div class="absolute -top-6 -right-6 w-16 h-16 bg-brand-50 rounded-full opacity-50 pointer-events-none">
+            </div>
         </div>
 
-        <div>
-            <div class="section-title">Indicadores</div>
-            <div style="height: 150px;"><canvas id="chartQuebras"></canvas></div>
-        </div>
-
-        <div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="section-title mb-0">Agenda Preventiva</div>
-                <button class="btn btn-sm btn-outline-info py-0" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#modalNovoPlano">
-                    <i class="fas fa-plus"></i> Novo Plano
+        <!-- Agenda Preventiva Card -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col flex-grow overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Agenda Preventiva</h3>
+                <button
+                    class="text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                    data-bs-toggle="modal" data-bs-target="#modalNovoPlano"
+                    onclick="new bootstrap.Modal(document.getElementById('modalNovoPlano')).show()">
+                    <i class="ph-bold ph-plus"></i> Novo Plano
                 </button>
             </div>
-            
-            <ul class="list-group list-group-flush small">
-                {% for plano in planos_futuros %}
-                <li class="list-group-item list-group-item-dark px-0 d-flex justify-content-between align-items-center bg-transparent">
-                    <div>
-                        <div class="fw-bold text-white">{{ plano.nome }}</div>
-                        <div class="text-muted" style="font-size: 0.7rem;">
-                            [{{ plano.maquina.codigo }}] {{ plano.maquina.nome }}
-                        </div>
-                    </div>
-                    <span class="badge {% if plano.proxima_data <= today %}bg-danger{% else %}bg-secondary{% endif %}">
-                        {{ plano.proxima_data|date:"d/m" }}
-                    </span>
-                </li>
-                {% empty %}
-                <li class="text-muted small text-center">Nenhum plano futuro.</li>
-                {% endfor %}
-            </ul>
-        </div>
-        
-        <div class="mt-auto">
-             <a href="{% url 'logout' %}" class="btn btn-outline-secondary w-100 btn-sm text-white border-secondary">Sair</a>
-        </div>
-    </aside>
 
-    <main class="gantt-area">
-        
-        <nav class="navbar-glass mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <a href="{% url 'lista_atividades' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-list me-2"></i>Voltar para Lista</a>
-                <div class="vr"></div>
-                <div><h6 class="mb-0 fw-bold">Cronograma Visual</h6><small class="text-muted">Gestão de Tempo</small></div>
+            <div class="flex-1 overflow-y-auto p-2">
+                {% if planos_futuros %}
+                <ul class="space-y-1">
+                    {% for plano in planos_futuros %}
+                    <li
+                        class="group flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-all border border-transparent hover:border-slate-100 cursor-pointer">
+                        <div>
+                            <p class="font-bold text-slate-700 text-sm group-hover:text-brand-600 transition-colors">
+                                {{ plano.procedimento_padrao.nome|default:plano.nome }}
+                            </p>
+                            <p class="text-xs text-slate-400 flex items-center gap-1">
+                                <i class="ph ph-gear"></i> [{{ plano.maquina.codigo }}] {{ plano.maquina.nome }}
+                            </p>
+                        </div>
+                        <span class="text-xs font-bold px-2 py-1 rounded-md border 
+                            {% if plano.proxima_data <= today %}bg-red-50 text-red-600 border-red-100
+                            {% else %}bg-slate-100 text-slate-600 border-slate-200{% endif %}">
+                            {{ plano.proxima_data|date:"d/m" }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+                    <i class="ph ph-calendar-slash text-4xl mb-2 text-slate-300"></i>
+                    <p class="text-sm">Nenhum plano futuro nos próximos dias.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Coluna Direita: Gantt e Controles (3/4) -->
+    <div class="lg:col-span-3 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+        <!-- Toolbar -->
+        <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap gap-4 justify-between items-center">
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="bg-brand-100 text-brand-600 p-2 rounded-lg">
+                        <i class="ph-bold ph-calendar-check text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-sm">Cronograma Visual</h2>
+                        <p class="text-xs text-slate-500 hidden sm:block">Gestão de alocação e tempo</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="d-flex gap-2 align-items-center flex-wrap">
-                <select id="filtroTecnico" class="form-select form-select-sm" style="width: 150px;" onchange="aplicarFiltros()">
-                    <option value="todos">👤 Todos Téc.</option>
-                    {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>{% endfor %}
-                </select>
-
-                <select id="filtroStatus" class="form-select form-select-sm" style="width: 140px;" onchange="aplicarFiltros()">
-                    <option value="todos">🔹 Status</option>
-                    <option value="aberta">Abertas</option>
-                    <option value="executando">Executando</option>
-                    <option value="pausada">Pausadas</option>
-                    <option value="finalizada">Concluídas</option>
-                </select>
-
-                <div class="btn-group ms-2">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="changeView('Day')">Dia</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="changeView('Week')">Sem</button>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Filtros -->
+                <div class="relative group">
+                    <i class="ph ph-user absolute left-3 top-2.5 text-slate-400"></i>
+                    <select id="filtroTecnico" onchange="aplicarFiltros()"
+                        class="pl-9 pr-8 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none shadow-sm cursor-pointer hover:border-slate-300 transition-colors appearance-none">
+                        <option value="todos">Todos Técnicos</option>
+                        {% for t in tecnicos %}<option value="{{ t.id }}">{{ t.first_name|default:t.username }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
-                <button class="btn btn-primary btn-sm fw-bold shadow-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalNovaAtividade">
-                    <i class="fas fa-plus me-2"></i>Nova OS
-                </button>
-            </div>
-        </nav>
+                <div class="relative group">
+                    <i class="ph ph-funnel absolute left-3 top-2.5 text-slate-400"></i>
+                    <select id="filtroStatus" onchange="aplicarFiltros()"
+                        class="pl-9 pr-8 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none shadow-sm cursor-pointer hover:border-slate-300 transition-colors appearance-none">
+                        <option value="todos">Todos Status</option>
+                        <option value="aberta">Abertas</option>
+                        <option value="executando">Executando</option>
+                        <option value="pausada">Pausadas</option>
+                        <option value="finalizada">Concluídas</option>
+                    </select>
+                </div>
 
-        <div class="gantt-wrapper" id="gantt-chart-wrapper">
-            <svg id="gantt-target"></svg>
+                <!-- View Switcher -->
+                <div class="flex bg-slate-200/50 p-1 rounded-lg border border-slate-200">
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-all"
+                        onclick="changeView('Day')">Dia</button>
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-all"
+                        onclick="changeView('Week')">Sem</button>
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-all"
+                        onclick="changeView('Month')">Mês</button>
+                </div>
+            </div>
+
         </div>
-    </main>
-</div>
 
-<div class="modal fade" id="modalNovoPlano" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-info text-dark">
-                <h6 class="modal-title fw-bold">Cadastrar Plano Preventivo</h6>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- Gantt Area -->
+        <div class="flex-grow bg-slate-50 relative overflow-hidden flex flex-col">
+            <div id="gantt-chart-wrapper" class="w-full h-full overflow-auto p-4 custom-scrollbar">
+                <!-- Skeleton Loader -->
+                <div id="gantt-skeleton" class="w-full h-full animate-pulse flex flex-col gap-4 p-4">
+                    <div class="h-8 bg-slate-200 rounded w-1/4"></div>
+                    <div class="h-24 bg-slate-200 rounded"></div>
+                    <div class="h-24 bg-slate-200 rounded"></div>
+                    <div class="h-24 bg-slate-200 rounded opacity-50"></div>
+                </div>
+                <svg id="gantt-target" class="hidden d-none"></svg>
             </div>
-            <form method="post">
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Modal Novo Plano -->
+<div class="modal fade" id="modalNovoPlano" tabindex="-1" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-2xl rounded-2xl overflow-hidden">
+            <div class="modal-header bg-slate-900 text-white p-4 border-0 flex justify-between items-center">
+                <div>
+                    <h6 class="modal-title font-bold text-lg">Novo Plano Preventivo</h6>
+                    <p class="text-xs text-slate-400">Configure a recorrência automática</p>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-white transition-colors"
+                    data-bs-dismiss="modal"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <form method="post" class="flex flex-col">
                 {% csrf_token %}
-                <div class="modal-body p-4">
-                    <p class="small text-muted mb-3">Defina a recorrência para que o sistema gere as OS automaticamente.</p>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nome do Plano</label>
+                <div class="modal-body p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Plano</label>
                         {{ form_plano.nome }}
+                        <!-- Nota: Assumindo que o form renderiza input padrão, classes seriam ideais no form django ou via JS, 
+                             mas o CSS global do Tailwind reseta. Vamos estilizar via JS ou wrapper se necessário. -->
                     </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Máquina</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Máquina</label>
                             {{ form_plano.maquina }}
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Procedimento (Opcional)</label>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Procedimento</label>
                             {{ form_plano.procedimento_padrao }}
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Frequência (Dias)</label>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Frequência
+                                (Dias)</label>
                             {{ form_plano.frequencia_dias }}
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Próxima Data</label>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Data Início</label>
                             {{ form_plano.proxima_data }}
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" name="btn_novo_plano" class="btn btn-info fw-bold w-100">Salvar Plano</button>
+                <div class="modal-footer p-4 bg-slate-50 border-t border-slate-100">
+                    <button type="button"
+                        class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="btn_novo_plano"
+                        class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-lg shadow-md shadow-brand-500/20 transition-all">Salvar
+                        Plano</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalNovaAtividade" tabindex="-1">
+<!-- Modal Nova Atividade (OS) -->
+<!-- Usando Bootstrap Modal por compatibilidade rápida, mas estilizado -->
+<div class="modal fade" id="modalNovaAtividade" tabindex="-1" style="display: none;">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white"><h6 class="modal-title fw-bold">Nova OS</h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-content border-0 shadow-2xl rounded-2xl">
+            <div class="modal-header bg-brand-600 text-white p-5 border-0 flex justify-between items-center">
+                <div>
+                    <h6 class="modal-title font-bold text-lg">Nova Ordem de Serviço</h6>
+                    <p class="text-xs text-brand-100">Preencha os dados da manutenção</p>
+                </div>
+                <button type="button" class="text-brand-200 hover:text-white transition-colors"
+                    data-bs-dismiss="modal"><i class="ph ph-x text-xl"></i></button>
+            </div>
             <form method="post">
                 {% csrf_token %}
-                <div class="modal-body p-4">
+                <div class="modal-body p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{ form_atividade.as_p }}
                 </div>
-                <div class="modal-footer"><button type="submit" name="btn_nova_atividade" class="btn btn-primary w-100">Salvar</button></div>
+                <div class="modal-footer p-4 bg-slate-50 border-t border-slate-100">
+                    <button type="button"
+                        class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="btn_nova_atividade"
+                        class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-lg shadow-md shadow-brand-500/20 transition-all">Emitir
+                        OS</button>
+                </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalDetalhesGantt" tabindex="-1">
+<!-- Modal Detalhes Gantt -->
+<div class="modal fade" id="modalDetalhesGantt" tabindex="-1" style="display: none;">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-bottom-0 bg-light">
-                <div><h6 class="modal-title fw-bold" id="detalheTitulo">Detalhes</h6><div class="small text-muted" id="detalheMaquina">-</div></div>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-7 border-end">
-                        <label class="small text-muted fw-bold">DESCRIÇÃO</label><p id="detalheDescricao" class="mb-3">-</p>
-                        <label class="small text-muted fw-bold">STATUS</label><div id="detalheStatus" class="mb-3">-</div>
-                        <label class="small text-muted fw-bold">EQUIPE</label><div id="detalheTecnicos" class="fw-bold">-</div>
+        <div class="modal-content border-0 shadow-2xl rounded-2xl overflow-hidden">
+            <div class="modal-header p-5 border-b border-slate-100 bg-white flex justify-between items-start">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 shadow-sm border border-brand-100">
+                        <i class="ph-bold ph-magnifying-glass-plus text-2xl"></i>
                     </div>
-                    <div class="col-md-5 bg-light rounded p-3">
-                        <h6 class="small fw-bold text-muted mb-3"><i class="fas fa-history me-2"></i>HISTÓRICO</h6>
-                        <div id="timelineContainer" style="max-height: 250px; overflow-y: auto;"></div>
+                    <div>
+                        <h6 class="modal-title font-bold text-xl text-slate-800" id="detalheTitulo">Detalhes</h6>
+                        <div class="text-sm text-brand-500 font-medium flex items-center gap-1 mt-0.5">
+                            <i class="ph-bold ph-engine"></i>
+                            <span id="detalheMaquina">-</span>
+                        </div>
                     </div>
                 </div>
+                <button type="button"
+                    class="text-slate-400 hover:text-red-500 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-full"
+                    data-bs-dismiss="modal"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="grid grid-cols-1 md:grid-cols-5 h-[450px]">
+                    <!-- Info -->
+                    <div class="col-span-3 p-6 space-y-6 overflow-y-auto">
+                        <!-- Prazos e Duração -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Início</label>
+                                <div id="detalheInicio" class="text-xs font-bold text-slate-700">-</div>
+                            </div>
+                            <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Fim</label>
+                                <div id="detalheFim" class="text-xs font-bold text-slate-700">-</div>
+                            </div>
+                            <div class="p-3 bg-brand-50 border border-brand-100 rounded-xl">
+                                <label
+                                    class="text-[10px] font-bold text-brand-400 uppercase tracking-widest block mb-1 text-center">Duração</label>
+                                <div id="detalheDuracao" class="text-xs font-bold text-brand-700 text-center">-</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Descrição
+                                do Problema</label>
+                            <p id="detalheDescricao"
+                                class="text-slate-700 text-sm leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 italic shadow-sm">
+                                -</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 text-center">Status
+                                    Atual</label>
+                                <div id="detalheStatus" class="flex justify-center">-</div>
+                            </div>
+                            <div>
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Responsáveis</label>
+                                <div id="detalheTecnicos"
+                                    class="text-sm font-semibold text-slate-700 bg-white p-2 rounded-lg border border-slate-100 shadow-sm flex items-center gap-2">
+                                    <i class="ph-fill ph-users text-slate-400"></i>
+                                    <span>-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Novo: Tempo Total de Pausa -->
+                        <div id="containerPausa"
+                            class="hidden d-none p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="ph-bold ph-timer text-amber-600"></i>
+                                <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Tempo Total de
+                                    Pausa</span>
+                            </div>
+                            <div id="detalheTempoPausa" class="text-sm font-bold text-amber-900">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="col-span-2 bg-slate-50 border-l border-slate-200 p-5 overflow-y-auto">
+                        <h6
+                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <i class="ph-bold ph-clock-counter-clockwise text-brand-500"></i> Log de Atividades
+                        </h6>
+                        <div id="timelineContainer" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-4 bg-white border-t border-slate-100 justify-end">
+                <button type="button"
+                    class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl shadow-lg shadow-slate-900/10 transition-all flex items-center gap-2"
+                    data-bs-dismiss="modal">
+                    <i class="ph-bold ph-check-circle"></i> Entendi
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Helper button to trigger modal from JS if needed (hidden) -->
+<button id="btnNovaAtividade" class="d-none hidden" data-bs-toggle="modal"
+    data-bs-target="#modalNovaAtividade"></button>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Dados para JS -->
 {{ labels_quebra|json_script:"dados-labels" }}
 {{ data_quebra|json_script:"dados-valores" }}
 
+<!-- Third Party Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Bootstrap Bundle (JS only for Modals compatibility, heavily reduced if possible later) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    let gantt_chart; let todasTarefas = [];
+    // Styling Inputs globally for this page since we are using Django Forms standard render
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            if (!el.classList.contains('form-control') && !el.classList.contains('form-select')) {
+                el.classList.add('w-full', 'px-3', 'py-2', 'bg-white', 'border', 'border-slate-200', 'rounded-lg', 'text-sm', 'focus:outline-none', 'focus:ring-2', 'focus:ring-brand-500/20', 'focus:border-brand-500', 'transition-all');
+            }
+        });
+    });
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js Configuration
+    document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('chartQuebras').getContext('2d');
         const labels = JSON.parse(document.getElementById('dados-labels').textContent);
         const data = JSON.parse(document.getElementById('dados-valores').textContent);
-        if(labels && labels.length > 0) new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ data: data, backgroundColor: '#0ea5e9', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
+
+        if (labels && labels.length > 0) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: true, drawBorder: false, color: '#f1f5f9' },
+                            ticks: { stepSize: 1, font: { size: 10, family: "'Inter', sans-serif" }, color: '#94a3b8' },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, family: "'Inter', sans-serif" }, color: '#64748b' }
+                        }
+                    }
+                }
+            });
+        }
     });
 
+    // Gantt Logic
+    let gantt_chart; let todasTarefas = [];
+
     async function initGantt() {
-        try { const res = await fetch('/api/gantt/dados/'); todasTarefas = await res.json(); aplicarFiltros(); } catch (err) { console.error(err); }
+        try {
+            // In a real scenario, remove the hardcoded fallback if API fails
+            const res = await fetch('/api/gantt/dados/');
+            todasTarefas = await res.json();
+            aplicarFiltros();
+        } catch (err) {
+            console.error("Erro ao carregar Gantt:", err);
+            document.getElementById('gantt-chart-wrapper').innerHTML =
+                `<div class="flex flex-col items-center justify-center h-full text-slate-400">
+                    <i class="ph ph-warning-circle text-3xl mb-2"></i>
+                    <p class="text-sm">Erro ao carregar dados do cronograma.</p>
+                </div>`;
+        }
     }
 
     function aplicarFiltros() {
         const filtroTec = document.getElementById('filtroTecnico').value;
         const filtroStat = document.getElementById('filtroStatus').value;
-        const tarefasFiltradas = todasTarefas.filter(t => { return ((filtroTec === 'todos') || t.tech_ids.includes(filtroTec)) && ((filtroStat === 'todos') || t.status === filtroStat); });
+
+        const tarefasFiltradas = todasTarefas.filter(t => {
+            return ((filtroTec === 'todos') || t.tech_ids.includes(filtroTec)) &&
+                ((filtroStat === 'todos') || t.status === filtroStat);
+        });
+
         renderGantt(tarefasFiltradas);
     }
 
     function renderGantt(tasks) {
         const wrapper = document.getElementById('gantt-chart-wrapper');
+        const skeleton = document.getElementById('gantt-skeleton');
+
+        // Hide Skeleton
+        if (skeleton) skeleton.classList.add('hidden', 'd-none');
+
+        // Reset
         wrapper.innerHTML = '<svg id="gantt-target"></svg>';
-        if (!tasks || tasks.length === 0) { wrapper.innerHTML = `<div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted"><p>Nenhuma tarefa.</p></div>`; return; }
+        const target = document.getElementById('gantt-target');
+        target.classList.remove('hidden', 'd-none');
+
+        if (!tasks || tasks.length === 0) {
+            wrapper.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 text-slate-400">
+                    <i class="ph ph-clipboard-text text-3xl mb-2 text-slate-300"></i>
+                    <p class="text-sm">Nenhuma tarefa encontrada.</p>
+                </div>`;
+            return;
+        }
+
         gantt_chart = new Gantt("#gantt-target", tasks, {
-            view_mode: 'Day', column_width: 30, bar_height: 25, padding: 18, date_format: 'YYYY-MM-DD', language: 'ptBr',
+            view_mode: 'Day',
+            column_width: 30,
+            bar_height: 25,
+            padding: 18,
+            date_format: 'YYYY-MM-DD',
+            language: 'ptBr',
+            custom_popup_html: null, // Disable default popup
             on_click: task => abrirDetalhes(task)
         });
     }
 
-    function changeView(mode) { if(gantt_chart) gantt_chart.change_view_mode(mode); }
+    function changeView(mode) {
+        if (gantt_chart) gantt_chart.change_view_mode(mode);
+    }
 
     function abrirDetalhes(task) {
         document.getElementById('detalheTitulo').innerText = task.full_name;
         document.getElementById('detalheMaquina').innerText = task.maquina;
         document.getElementById('detalheDescricao').innerText = task.description;
-        document.getElementById('detalheTecnicos').innerText = task.tech_names || "Sem técnicos";
-        document.getElementById('detalheStatus').innerHTML = `<span class="badge bg-secondary text-uppercase">${task.status}</span>`;
-        
+        document.getElementById('detalheTecnicos').querySelector('span').innerText = task.tech_names || "Sem técnicos";
+
+        // Novos campos temporais
+        document.getElementById('detalheInicio').innerText = task.start_formatted || "-";
+        document.getElementById('detalheFim').innerText = task.end_formatted || "-";
+        document.getElementById('detalheDuracao').innerText = task.duration || "-";
+
+        // Lógica de Tempo de Pausa
+        const containerPausa = document.getElementById('containerPausa');
+        if (task.tempo_pausa && task.tempo_pausa > 0) {
+            containerPausa.classList.remove('hidden', 'd-none');
+            // Formatar segundos para Hh Mm
+            const h = Math.floor(task.tempo_pausa / 3600);
+            const m = Math.floor((task.tempo_pausa % 3600) / 60);
+            document.getElementById('detalheTempoPausa').innerText = `${h}h ${m}m`;
+        } else {
+            containerPausa.classList.add('hidden', 'd-none');
+        }
+
+        // Status Badge Style
+        const statusMap = {
+            'aberta': 'bg-slate-100 text-slate-600 border-slate-200',
+            'executando': 'bg-green-100 text-green-700 border-green-200',
+            'pausada': 'bg-amber-100 text-amber-700 border-amber-200',
+            'finalizada': 'bg-blue-100 text-blue-700 border-blue-200',
+            'Agendada': 'bg-indigo-50 text-indigo-600 border-indigo-100'
+        };
+        const statusClass = statusMap[task.status] || 'bg-slate-100 text-slate-600 border-slate-200';
+
+        document.getElementById('detalheStatus').innerHTML =
+            `<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm ${statusClass}">${task.status}</span>`;
+
         const tlContainer = document.getElementById('timelineContainer');
-        if(task.logs && task.logs.length > 0) {
-            let html = '<ul class="timeline">';
+        if (task.logs && task.logs.length > 0) {
+            let html = '<div class="relative pl-4 border-l-2 border-slate-200 space-y-6">';
             task.logs.forEach(log => {
-                html += `<li class="timeline-item"><div class="timeline-date">${log.data} - ${log.usuario}</div><div class="timeline-content">${log.descricao}</div></li>`;
+                html += `
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 bg-white border-2 border-brand-500 rounded-full"></div>
+                        <p class="text-xs text-slate-400 font-semibold mb-1">${log.data} <span class="text-slate-300">•</span> ${log.usuario}</p>
+                        <div class="bg-white p-2 rounded border border-slate-200 text-xs text-slate-600 shadow-sm">${log.descricao}</div>
+                    </div>`;
             });
-            html += '</ul>';
+            html += '</div>';
             tlContainer.innerHTML = html;
         } else {
-            tlContainer.innerHTML = '<p class="text-muted small text-center mt-4">Sem registros.</p>';
+            tlContainer.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">Sem registros de histórico.</p>';
         }
-        
+
         new bootstrap.Modal(document.getElementById('modalDetalhesGantt')).show();
     }
-    
+
     window.onload = initGantt;
 </script>
-</body>
-</html>
+{% endblock %}

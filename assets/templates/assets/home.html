@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Início | LYPSYOS{% endblock %}
+{% block page_title %}Início{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-8">
+
+    <!-- Hero Section -->
+    <div
+        class="bg-gradient-to-r from-brand-900 to-brand-700 rounded-2xl p-8 md:p-12 shadow-lg text-white relative overflow-hidden">
+        <div class="relative z-10 max-w-2xl">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">Bem-vindo ao Lypsyos</h1>
+            <p class="text-brand-100 text-lg mb-8 leading-relaxed">
+                Sistema de Gestão de Manutenção Inteligente. Acompanhe ativos, ordem de serviços e indicadores em tempo
+                real.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="{% url 'abrir_chamado' %}"
+                    class="bg-white text-brand-700 hover:bg-brand-50 font-bold py-3 px-6 rounded-lg shadow transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                    <i class="ph-bold ph-plus-circle text-xl"></i>
+                    Abrir Novo Chamado
+                </a>
+                <a href="{% url 'kanban_view' %}"
+                    class="bg-brand-600 border border-brand-500 hover:bg-brand-500 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center gap-2">
+                    <i class="ph-bold ph-kanban text-xl"></i>
+                    Ver Quadro de Atividades
+                </a>
+            </div>
+        </div>
+
+        <!-- Decorative Elements -->
+        <i class="ph ph-squares-four text-[15rem] absolute -right-10 -bottom-20 text-white opacity-5"></i>
+        <div
+            class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2">
+        </div>
+    </div>
+
+    <!-- Quick Access Cards -->
+    <div>
+        <h2 class="text-slate-800 font-bold text-xl mb-4 flex items-center gap-2">
+            <i class="ph-duotone ph-lightning text-brand-600"></i> Acesso Rápido
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <!-- Card 1: Abrir Chamado -->
+            <a href="{% url 'abrir_chamado' %}"
+                class="group bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-200 transition-all flex flex-col items-start gap-4">
+                <div class="bg-brand-50 group-hover:bg-brand-100 p-3 rounded-lg text-brand-600 transition-colors">
+                    <i class="ph-bold ph-wrench text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 group-hover:text-brand-700 transition-colors">Solicitar
+                        Manutenção</h3>
+                    <p class="text-sm text-slate-500 mt-1">Registre quebras ou solicite serviços para máquinas.</p>
+                </div>
+                <div
+                    class="mt-auto pt-2 text-brand-600 text-sm font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+                    Acessar <i class="ph-bold ph-arrow-right"></i>
+                </div>
+            </a>
+
+            <!-- Card 2: Meus Ativos (Kanban) -->
+            <a href="{% url 'kanban_view' %}"
+                class="group bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-violet-200 transition-all flex flex-col items-start gap-4">
+                <div class="bg-violet-50 group-hover:bg-violet-100 p-3 rounded-lg text-violet-600 transition-colors">
+                    <i class="ph-bold ph-list-dashes text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 group-hover:text-violet-700 transition-colors">Gestão de
+                        Atividades</h3>
+                    <p class="text-sm text-slate-500 mt-1">Visualize chamados em lista ou quadro Kanban.</p>
+                </div>
+                <div
+                    class="mt-auto pt-2 text-violet-600 text-sm font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+                    Acessar <i class="ph-bold ph-arrow-right"></i>
+                </div>
+            </a>
+
+            <!-- Card 3: Dashboard -->
+            <a href="{% url 'dashboard_analitico' %}"
+                class="group bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all flex flex-col items-start gap-4">
+                <div class="bg-emerald-50 group-hover:bg-emerald-100 p-3 rounded-lg text-emerald-600 transition-colors">
+                    <i class="ph-bold ph-chart-line-up text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">Indicadores &
+                        Relatórios</h3>
+                    <p class="text-sm text-slate-500 mt-1">Análise de preventivas, quebras e cronogramas.</p>
+                </div>
+                <div
+                    class="mt-auto pt-2 text-emerald-600 text-sm font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+                    Acessar <i class="ph-bold ph-arrow-right"></i>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

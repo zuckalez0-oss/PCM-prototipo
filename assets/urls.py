@@ -2,8 +2,13 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # --- ROTA PRINCIPAL (Lista de Tarefas) ---
-    path('', views.lista_atividades, name='lista_atividades'), 
+    # --- ROTA PRINCIPAL (Home) ---
+    path('', views.home, name='home'), 
+    
+    # --- KANBAN / LISTA (Antiga Lista Atividades) ---
+    path('kanban/', views.kanban_view, name='kanban_view'),
+    # Mantendo rota antiga redirecionando ou como alias se necessário, mas removendo do menu
+    # path('lista/', views.lista_atividades, name='lista_atividades'), 
 
     # --- DASHBOARD E ANÁLISE (Novas Funcionalidades) ---
     path('dashboard/', views.dashboard_analitico, name='dashboard_analitico'), # O novo painel com gráficos
@@ -11,6 +16,7 @@ urlpatterns = [
 
     # --- GESTÃO DE CHAMADOS ---
     path('chamado/novo/', views.abrir_chamado, name='abrir_chamado'),
+    path('notificacoes/', views.notificacoes_dropdown, name='notificacoes_dropdown'),
     path('chamado/aprovar/<int:chamado_id>/', views.aprovar_chamado, name='aprovar_chamado'),
     path('chamado/recusar/<int:chamado_id>/', views.recusar_chamado, name='recusar_chamado'),
 

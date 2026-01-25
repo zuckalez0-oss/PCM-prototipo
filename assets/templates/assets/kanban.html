@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Kanban de Atividades | LYPSYOS{% endblock %}
+{% block page_title %}Gestão de Atividades{% endblock %}
+
+{% block content %}
+<div class="h-full flex flex-col">
+
+    <!-- Header / Controls -->
+    <div class="flex justify-between items-center mb-6">
+
+        <!-- View Toggle -->
+        <div class="bg-slate-200/50 p-1 rounded-lg border border-slate-200 inline-flex" id="view-toggles">
+            <button
+                class="px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2
+                           {% if view_mode == 'board' %}bg-white text-brand-600 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}"
+                hx-get="{% url 'kanban_view' %}" hx-vals='{"mode": "board"}' hx-target="body" hx-push-url="true">
+                <i class="ph-bold ph-squares-four"></i> Kanban
+            </button>
+            <button
+                class="px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2
+                           {% if view_mode == 'list' %}bg-white text-brand-600 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}"
+                hx-get="{% url 'kanban_view' %}" hx-vals='{"mode": "list"}' hx-target="body" hx-push-url="true">
+                <i class="ph-bold ph-list-dashes"></i> Lista
+            </button>
+        </div>
+
+        <!-- Quick Actions -->
+        <div>
+            <a href="{% url 'abrir_chamado' %}"
+                class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition-colors">
+                <i class="ph-bold ph-plus"></i> Novo Chamado
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div id="kanban-container" class="flex-1 min-h-0 overflow-hidden relative">
+        {% if view_mode == 'board' %}
+        {% include 'assets/partials/_kanban_board.html' %}
+        {% else %}
+        <div class="h-full overflow-y-auto custom-scrollbar">
+            {% include 'assets/partials/_kanban_list.html' %}
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

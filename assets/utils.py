@@ -66,11 +66,32 @@ def sequenciar_atividades(atividades_queryset):
                 inicio_efetivo = data_base
 
             fim_efetivo = inicio_efetivo + duracao
+            
+            # --- NOVO: Acompanhamento em tempo real para atividades em execução ---
+            if act.status == 'executando':
+                agora = timezone.now()
+                # Puxar para o presente se estava no futuro
+                if inicio_efetivo > agora:
+                    inicio_efetivo = agora
+                
+                # Garantir que o fim também seja no mínimo "agora"
+                fim_efetivo = max(inicio_efetivo + duracao, agora)
+                    
             colaboradores_progresso[tecnico_id] = fim_efetivo
         
         else:
             inicio_efetivo = data_base
             fim_efetivo = inicio_efetivo + duracao
+            
+            # --- NOVO: Acompanhamento em tempo real (mesmo sem técnico atribuído) ---
+            if act.status == 'executando':
+                agora = timezone.now()
+                # Puxar para o presente se estava no futuro
+                if inicio_efetivo > agora:
+                    inicio_efetivo = agora
+                    
+                # Garantir que o fim também seja no mínimo "agora"
+                fim_efetivo = max(inicio_efetivo + duracao, agora)
 
         # --- ANEXA OS DADOS CALCULADOS AO OBJETO ---
         act.inicio_calculado = inicio_efetivo
