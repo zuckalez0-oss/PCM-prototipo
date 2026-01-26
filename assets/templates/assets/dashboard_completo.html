@@ -474,30 +474,47 @@
 
     // Gantt Logic
     let gantt_chart; let todasTarefas = [];
+    let ganttInterval;
 
     async function initGantt() {
         try {
-            // In a real scenario, remove the hardcoded fallback if API fails
-            const res = await fetch('/api/gantt/dados/');
+            const res = await fetch('/api/gantt/dados/?all=true');
             todasTarefas = await res.json();
-            aplicarFiltros();
+            aplicarFiltros(true);
+
+            // Auto-refresh a cada 5 minutos para as barras "crescerem" com o tempo
+            if (ganttInterval) clearInterval(ganttInterval);
+            ganttInterval = setInterval(async () => {
+                console.log("Atualizando cronograma Gantt...");
+                const r = await fetch('/api/gantt/dados/?all=true');
+                todasTarefas = await r.json();
+                aplicarFiltros(false);
+            }, 300000); // 5 min
+
         } catch (err) {
             console.error("Erro ao carregar Gantt:", err);
             document.getElementById('gantt-chart-wrapper').innerHTML =
                 `<div class="flex flex-col items-center justify-center h-full text-slate-400">
-                    <i class="ph ph-warning-circle text-3xl mb-2"></i>
-                    <p class="text-sm">Erro ao carregar dados do cronograma.</p>
+                    <i class="ph ph-warning-circle text-2xl mb-2"></i>
+                    <p class="text-[10px] font-black uppercase">Erro ao carregar cronograma.</p>
                 </div>`;
         }
     }
 
-    function aplicarFiltros() {
+    function aplicarFiltros(isInitial = false) {
         const filtroTec = document.getElementById('filtroTecnico').value;
         const filtroStat = document.getElementById('filtroStatus').value;
 
         const tarefasFiltradas = todasTarefas.filter(t => {
-            return ((filtroTec === 'todos') || t.tech_ids.includes(filtroTec)) &&
-                ((filtroStat === 'todos') || t.status === filtroStat);
+            const matchTecnico = (filtroTec === 'todos') || t.tech_ids.includes(filtroTec);
+            let matchStatus = (filtroStat === 'todos') || t.status === filtroStat;
+
+            // Regra: No load inicial (Todos Status), escondemos finalizadas
+            if (isInitial && filtroStat === 'todos' && (t.status === 'finalizada' || t.status === 'cancelada')) {
+                return false;
+            }
+
+            return matchTecnico && matchStatus;
         });
 
         renderGantt(tarefasFiltradas);
@@ -507,7 +524,6 @@
         const wrapper = document.getElementById('gantt-chart-wrapper');
         const skeleton = document.getElementById('gantt-skeleton');
 
-        // Hide Skeleton
         if (skeleton) skeleton.classList.add('hidden', 'd-none');
 
         // Reset
@@ -517,23 +533,46 @@
 
         if (!tasks || tasks.length === 0) {
             wrapper.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-64 text-slate-400">
-                    <i class="ph ph-clipboard-text text-3xl mb-2 text-slate-300"></i>
-                    <p class="text-sm">Nenhuma tarefa encontrada.</p>
+                <div class="flex flex-col items-center justify-center h-64 text-slate-400 opacity-40 italic">
+                    <i class="ph ph-clipboard-text text-4xl mb-2"></i>
+                    <p class="text-[10px] font-black uppercase">Nenhuma atividade ativa encontrada.</p>
                 </div>`;
             return;
         }
 
         gantt_chart = new Gantt("#gantt-target", tasks, {
-            view_mode: 'Day',
-            column_width: 30,
+            view_mode: 'Quarter Day',
+            column_width: 100,
             bar_height: 25,
-            padding: 18,
-            date_format: 'YYYY-MM-DD',
+            padding: 15,
             language: 'ptBr',
-            custom_popup_html: null, // Disable default popup
+            custom_popup_html: null,
             on_click: task => abrirDetalhes(task)
         });
+
+        // Desenha a linha do "Agora" para referência visual
+        setTimeout(() => drawNowLine(), 500);
+    }
+
+    function drawNowLine() {
+        const container = document.querySelector('#gantt-target');
+        if (!container || !gantt_chart) return;
+
+        const oldLine = container.querySelector('.now-line');
+        if (oldLine) oldLine.remove();
+
+        const x = gantt_chart.get_x_pos(new Date());
+        if (!x) return;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', 0);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', '100%');
+        line.setAttribute('class', 'now-line');
+        line.setAttribute('style', 'stroke: #ef4444; stroke-width: 2; stroke-dasharray: 4; opacity: 0.7;');
+
+        container.appendChild(line);
     }
 
     function changeView(mode) {
@@ -541,21 +580,32 @@
     }
 
     function abrirDetalhes(task) {
-        document.getElementById('detalheTitulo').innerText = task.full_name;
-        document.getElementById('detalheMaquina').innerText = task.maquina;
-        document.getElementById('detalheDescricao').innerText = task.description;
-        document.getElementById('detalheTecnicos').querySelector('span').innerText = task.tech_names || "Sem técnicos";
+        console.log("Abrindo Detalhes (ISO):", task);
 
-        // Novos campos temporais
+        document.getElementById('detalheTitulo').innerText = task.full_name || "Sem título";
+        document.getElementById('detalheMaquina').innerText = task.maquina || "-";
+        document.getElementById('detalheDescricao').innerText = task.description || "Sem descrição.";
+        document.getElementById('detalheTecnicos').querySelector('span').innerText = task.tech_names || "Pendente";
+
+        // Datas Localizadas e Formatadas vindas da API (Servidor já calculou o LocalTime)
         document.getElementById('detalheInicio').innerText = task.start_formatted || "-";
-        document.getElementById('detalheFim').innerText = task.end_formatted || "-";
+
+        // Se a API mandou end_formatted como null/None, mostramos em aberto
+        const fimEl = document.getElementById('detalheFim');
+        if (!task.end_formatted || task.status === 'executando') {
+            fimEl.innerText = "-";
+            fimEl.classList.add('opacity-50');
+        } else {
+            fimEl.innerText = task.end_formatted;
+            fimEl.classList.remove('opacity-50');
+        }
+
         document.getElementById('detalheDuracao').innerText = task.duration || "-";
 
         // Lógica de Tempo de Pausa
         const containerPausa = document.getElementById('containerPausa');
-        if (task.tempo_pausa && task.tempo_pausa > 0) {
+        if (task.status === 'pausada' && task.tempo_pausa > 0) {
             containerPausa.classList.remove('hidden', 'd-none');
-            // Formatar segundos para Hh Mm
             const h = Math.floor(task.tempo_pausa / 3600);
             const m = Math.floor((task.tempo_pausa % 3600) / 60);
             document.getElementById('detalheTempoPausa').innerText = `${h}h ${m}m`;
@@ -574,23 +624,27 @@
         const statusClass = statusMap[task.status] || 'bg-slate-100 text-slate-600 border-slate-200';
 
         document.getElementById('detalheStatus').innerHTML =
-            `<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm ${statusClass}">${task.status}</span>`;
+            `<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm ${statusClass}">${task.status_display || task.status}</span>`;
 
         const tlContainer = document.getElementById('timelineContainer');
         if (task.logs && task.logs.length > 0) {
-            let html = '<div class="relative pl-4 border-l-2 border-slate-200 space-y-6">';
+            let html = '<div class="relative pl-4 border-l-2 border-slate-200 space-y-4">';
             task.logs.forEach(log => {
                 html += `
                     <div class="relative">
                         <div class="absolute -left-[21px] top-1 w-3 h-3 bg-white border-2 border-brand-500 rounded-full"></div>
-                        <p class="text-xs text-slate-400 font-semibold mb-1">${log.data} <span class="text-slate-300">•</span> ${log.usuario}</p>
-                        <div class="bg-white p-2 rounded border border-slate-200 text-xs text-slate-600 shadow-sm">${log.descricao}</div>
+                        <p class="text-[10px] text-slate-400 font-bold mb-0.5">${log.data} • ${log.usuario}</p>
+                        <div class="bg-white p-2 rounded-lg border border-slate-200 text-[11px] text-slate-600 shadow-sm">${log.descricao}</div>
                     </div>`;
             });
             html += '</div>';
             tlContainer.innerHTML = html;
         } else {
-            tlContainer.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">Sem registros de histórico.</p>';
+            tlContainer.innerHTML = `
+                <div class='flex flex-col items-center justify-center p-10 opacity-30 italic'>
+                    <i class='ph ph-files text-4xl mb-2'></i>
+                    <p class='text-[10px] uppercase font-black'>Sem registros.</p>
+                </div>`;
         }
 
         new bootstrap.Modal(document.getElementById('modalDetalhesGantt')).show();

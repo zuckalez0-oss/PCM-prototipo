@@ -74,25 +74,30 @@
                                 <i class="ph-bold ph-info"></i>
                             </button>
 
-                            <!-- Actions similar to Kanban Card -->
                             {% if atividade.status == 'executando' %}
                             <button
                                 class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
                                 hx-post="{% url 'alterar_status' atividade.id 'pausada' %}"
-                                hx-target="#kanban-container" hx-vals='{"view_mode": "list"}' hx-swap="innerHTML">
+                                hx-target="#kanban-container"
+                                hx-include="[name='mode'], [name='filtro_data'], [name='data_especifica']"
+                                hx-swap="innerHTML transition:true">
                                 <i class="ph-bold ph-pause"></i>
                             </button>
                             <button
                                 class="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                 hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}"
-                                hx-target="#kanban-container" hx-vals='{"view_mode": "list"}' hx-swap="innerHTML">
+                                hx-target="#kanban-container"
+                                hx-include="[name='mode'], [name='filtro_data'], [name='data_especifica']"
+                                hx-swap="innerHTML transition:true">
                                 <i class="ph-bold ph-check"></i>
                             </button>
                             {% elif atividade.status != 'finalizada' %}
                             <button
                                 class="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                 hx-post="{% url 'alterar_status' atividade.id 'executando' %}"
-                                hx-target="#kanban-container" hx-vals='{"view_mode": "list"}' hx-swap="innerHTML">
+                                hx-target="#kanban-container"
+                                hx-include="[name='mode'], [name='filtro_data'], [name='data_especifica']"
+                                hx-swap="innerHTML transition:true">
                                 <i class="ph-bold ph-play"></i>
                             </button>
                             {% endif %}

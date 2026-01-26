@@ -47,7 +47,8 @@
             <button
                 class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
                 title="Concluir" hx-post="{% url 'alterar_status' atividade.id 'finalizada' %}"
-                hx-target="#kanban-container" hx-vals='{"view_mode": "board"}' hx-swap="innerHTML">
+                hx-target="#kanban-container" hx-include="[name='mode'], [name='filtro_data'], [name='data_especifica']"
+                hx-swap="innerHTML transition:true">
                 <i class="ph-bold ph-check"></i>
             </button>
 
@@ -56,7 +57,8 @@
             <button
                 class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-green-500 hover:bg-green-50 transition-colors"
                 title="Iniciar" hx-post="{% url 'alterar_status' atividade.id 'executando' %}"
-                hx-target="#kanban-container" hx-vals='{"view_mode": "board"}' hx-swap="innerHTML">
+                hx-target="#kanban-container" hx-include="[name='mode'], [name='filtro_data'], [name='data_especifica']"
+                hx-swap="innerHTML transition:true">
                 <i class="ph-bold ph-play"></i>
             </button>
             {% endif %}

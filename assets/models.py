@@ -117,3 +117,21 @@ class AtividadeLog(models.Model):
 
     def __str__(self):
         return f"{self.atividade.id} - {self.status_novo} - {self.data_registro}"
+
+class AcessoLog(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    path = models.CharField(max_length=255)
+    method = models.CharField(max_length=10)
+    status_code = models.IntegerField()
+    user_agent = models.TextField(null=True, blank=True)
+    data_acesso = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Log de Acesso"
+        verbose_name_plural = "Logs de Acesso"
+        ordering = ['-data_acesso']
+
+    def __str__(self):
+        user_display = self.usuario.username if self.usuario else "Anônimo"
+        return f"{self.data_acesso.strftime('%d/%m %H:%M')} - {user_display} - {self.path} ({self.status_code})"

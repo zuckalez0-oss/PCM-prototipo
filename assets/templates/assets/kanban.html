@@ -4,25 +4,65 @@
 {% block page_title %}Gestão de Atividades{% endblock %}
 
 {% block content %}
-<div class="h-full flex flex-col">
+<div class="h-full flex flex-col"
+    x-data="{ viewMode: '{{ view_mode }}', openCustom: {% if is_custom %}true{% else %}false{% endif %} }">
 
     <!-- Header / Controls -->
     <div class="flex justify-between items-center mb-6">
 
-        <!-- View Toggle -->
-        <div class="bg-slate-200/50 p-1 rounded-lg border border-slate-200 inline-flex" id="view-toggles">
-            <button
-                class="px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2
-                           {% if view_mode == 'board' %}bg-white text-brand-600 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}"
-                hx-get="{% url 'kanban_view' %}" hx-vals='{"mode": "board"}' hx-target="body" hx-push-url="true">
-                <i class="ph-bold ph-squares-four"></i> Kanban
-            </button>
-            <button
-                class="px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2
-                           {% if view_mode == 'list' %}bg-white text-brand-600 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}"
-                hx-get="{% url 'kanban_view' %}" hx-vals='{"mode": "list"}' hx-target="body" hx-push-url="true">
-                <i class="ph-bold ph-list-dashes"></i> Lista
-            </button>
+        <!-- View Toggle & Filters -->
+        <div class="flex flex-wrap items-center gap-4">
+
+            <!-- Modo de Visão -->
+            <div class="bg-slate-200/50 p-1 rounded-lg border border-slate-200 inline-flex" id="view-toggles">
+                <button
+                    class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 flex items-center gap-2"
+                    :class="viewMode === 'board' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    @click="viewMode = 'board'" hx-get="{% url 'kanban_view' %}" hx-vals='{"mode": "board"}'
+                    hx-target="#kanban-container" hx-swap="innerHTML transition:true"
+                    hx-include="#filtro-data-select, #filtro-data-especifica" hx-push-url="true">
+                    <i class="ph-bold ph-squares-four"></i> Kanban
+                </button>
+                <button
+                    class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 flex items-center gap-2"
+                    :class="viewMode === 'list' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    @click="viewMode = 'list'" hx-get="{% url 'kanban_view' %}" hx-vals='{"mode": "list"}'
+                    hx-target="#kanban-container" hx-swap="innerHTML transition:true"
+                    hx-include="#filtro-data-select, #filtro-data-especifica" hx-push-url="true">
+                    <i class="ph-bold ph-list-dashes"></i> Lista
+                </button>
+            </div>
+
+            <!-- Filtros de Data -->
+            <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-2 text-slate-400 border-r border-slate-100 pr-3">
+                    <i class="ph-bold ph-funnel text-lg"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider">Concluídas</span>
+                </div>
+
+                <select name="filtro_data" id="filtro-data-select"
+                    class="bg-transparent text-sm font-medium focus:outline-none cursor-pointer text-slate-700"
+                    hx-get="{% url 'kanban_view' %}" hx-target="#kanban-container"
+                    hx-include="[name='mode'], #filtro-data-especifica" hx-swap="innerHTML transition:true"
+                    @change="openCustom = ($el.value === 'custom')">
+                    <option value="recente" {% if is_recente %}selected{% endif %}>Recentes (10)</option>
+                    <option value="hoje" {% if is_hoje %}selected{% endif %}>Hoje</option>
+                    <option value="mes" {% if is_mes %}selected{% endif %}>Este Mês</option>
+                    <option value="ano" {% if is_ano %}selected{% endif %}>Este Ano</option>
+                    <option value="custom" {% if is_custom %}selected{% endif %}>Data Específica...</option>
+                </select>
+
+                <!-- Hidden Input for mode to maintain state for ALL elements -->
+                <input type="hidden" name="mode" :value="viewMode">
+
+                <div x-show="openCustom" x-transition class="flex items-center gap-2 pl-3 border-l border-slate-100">
+                    <input type="date" name="data_especifica" id="filtro-data-especifica" value="{{ data_especifica }}"
+                        class="text-xs border-0 bg-slate-50 rounded-md p-1 focus:ring-0"
+                        hx-get="{% url 'kanban_view' %}" hx-target="#kanban-container"
+                        hx-include="[name='mode'], #filtro-data-select" hx-swap="innerHTML transition:true"
+                        hx-trigger="change">
+                </div>
+            </div>
         </div>
 
         <!-- Quick Actions -->

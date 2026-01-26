@@ -21,7 +21,8 @@
 
         <!-- Form -->
         <form hx-post="{% url 'alterar_status' atividade.id 'pausada' %}" hx-target="#kanban-container"
-            hx-vals='{"view_mode": "board"}' hx-swap="innerHTML" @submit="showPauseModal = false">
+            hx-include="[name='mode'], [name='filtro_data'], [name='data_especifica']"
+            hx-swap="innerHTML transition:true" @submit="showPauseModal = false">
 
             <div class="p-6">
                 <label for="justificativa_{{ atividade.id }}" class="block text-sm font-semibold text-slate-700 mb-2">
